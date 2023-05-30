@@ -5,25 +5,29 @@
 #include "source.h"
 
 #define MAX_LENGTH 50  /* Tamanho máximo dos nomes de ficheiro e de cliente */
+#define DATE_LENGTH 11  /* Tamanho máximo de um formato de data */
+#define TIME_LENGTH 6  /* Tamanho máximo de um formato de horário */
 
 void printMenu();  /* Menu principal */
-Booking askData(int check);  /* Pedir os dados ao utilizador */
+Booking askData(int check, int *validate);  /* Pedir os dados ao utilizador */
 
 int is_leap_year(int year);  /* Verifica se o ano é bissexto */
 int is_valid_date(int day, int month, int year);  /* Verifica a validade do formato da data */
-int check_date_validity(Booking element);  /* Verifica se a data é posterior à data atual de sistema */
+struct tm systemTime();  /* Guarda a data de sistema atual */
+int check_date_validity(Booking *element);  /* Verifica se a data é posterior à data de sistema */
+int check_time_validity(Booking *element, int validate);  /* Se a data de sistema coincidir com a dada, verifica se o horário é posterior ao horário de sistema */
 
 int main() {
     printf("\n\e[0;34m»»»» GESTÃO DE RESERVAS DE OFICINA ««««\e[0m\n");
 
-    /* Declaração de variáveis */
+    /* Declaração de variáveis e pointers */
+    int validate;
     char choice, extra;
-    char *fileName = (char*) malloc (MAX_LENGTH * sizeof(char));  /* Alocação de memória para o pointer do nome de ficheiro */
+    char fileName[MAX_LENGTH];
     typeQueue *ptr_queue = (typeQueue *) malloc (sizeof(typeQueue));  /* Alocação de memória para o pointer da queue */
     ptr_list list = createList();  /* Alocação de memória para o pointer da linked list, juntamente com a sua criação */
-
-    if (fileName == NULL || ptr_queue == NULL || list == NULL) {
-        printf("Memory not allocated.\n");
+    if (ptr_queue == NULL || list == NULL) {
+        printf("Memória não alocada.\n");
         exit(1);
     }
     createQueue(ptr_queue);  /* Criação da queue */
@@ -32,59 +36,57 @@ int main() {
     do {
         printMenu();
         choice = getchar();
-        if(choice != '\n') extra = getchar();  /* Auxilia a deteção da inserção de + do que 1 caracter */
-        if(extra != '\n' || choice == '\n') {  /* Se + do que 1 caracter foi inserido */
-            printf("\e[1;32m>$ O programa recebe 1 caracter! Tente novamente.\e[0m\n");
+        if (choice != '\n') extra = getchar();  /* Auxilia a deteção da inserção de + do que 1 caracter */
+        if (extra != '\n' || choice == '\n') {  /* Se + do que 1 caracter foi inserido (ou nenhum) */
+            printf(">$ O programa recebe 1 caracter! Tente novamente.\n");
             if (choice != '\n') while (getchar() != '\n');  /* Limpeza do buffer */
-            choice = 'e';  /* Sair do ciclo */
+            choice = 'r';  /* Sair do ciclo (reset) */
         } else {  /* Senão... */
             switch (choice) {
-                case '0':
-                    printf("\e[1;32m>$ A encerrar o programa...\e[0m\n");
-                    printf("\n");
+                case '0':  /* Encerrar o programa */
+                    printf("\e[1;32m>$ A encerrar o programa...\e[0m\n\n");
                     break;
-                case '1':
-                    printf("\e[1;32m>$ Nome do ficheiro [ex: t1.txt]:\e[0m ");
+                case '1':  /* Carregar informação */
+                    printf("\e[1;32m>$ Nome do ficheiro [ex: t1.txt]: \e[0m ");
                     scanf("%49[^\n]s", fileName);
                     while(getchar() != '\n');  /* Limpeza do buffer */
                     loadInfo(fileName, list, ptr_queue);
-                    printf(">$ Informação carregada com sucesso.\n");
                     break;
-                case '2':
-                    printf("\e[1;32m>$ Nome do ficheiro [ex: t1.txt]:\e[0m ");
+                case '2':  /* Gravar o estado atual das reservas */
+                    printf("\e[1;32m>$ Nome do ficheiro [ex: t1.txt]: \e[0m");
                     scanf("%49[^\n]s", fileName);
                     while(getchar() != '\n');  /* Limpeza do buffer */
                     saveInfo(fileName, list, ptr_queue);
-                    printf(">$ Informação gravada com sucesso.\n");
                     break;
-                case '3':
-                    reserve(askData(1), list, ptr_queue); /* O parâmetro 1/0 apenas auxilia no pedido (ou não) do serviço ao utilizador */
+                case '3':  /* Reservar lavagem ou manutenção */
+                    reserve(askData(1, &validate), list, ptr_queue, &validate);  /* O parâmetro 1 apenas auxilia no pedido do serviço ao utilizador */
                     break;
-                case '4':
-                    cancelRes(list, ptr_queue, askData(0));
+                case '4': /* Cancelar reserva */
+                    cancelRes(list, ptr_queue, askData(0, &validate));
                     break;
-                case '5':
-                    cancelPreRes(ptr_queue, askData(0));
+                case '5':  /* Cancelar pré-reserva */
+                    cancelPreRes(ptr_queue, askData(0, &validate));
                     break;
-                case '6':
-                    listingRes(list, ptr_queue, 6);
+                case '6':  /* Listar todas as reservas e pré-reservas (+ antigas primeiro) */
+                    listingRes(list, ptr_queue, 6);  /* O parâmetro 6 auxilia o print das reservas da + antiga para a mais recente */
                     break;
-                case '7':
-                    listingClient(list, ptr_queue, 7);
+                case '7':  /* Listar as reservas e pré-reservas de um cliente (+ recentes primeiro) */
+                    listingClient(list, ptr_queue, 7);  /* O parâmetro 7 auxilia o print das reservas da + recente para a mais antiga */
                     break;
-                case '8':
-                    updateServices(ptr_queue, list, askData(0));
+                case '8':  /* Realizar uma lavagem ou manutenção */
+                    updateServices(ptr_queue, list, askData(0, &validate));
                     break;
-                default:
+                default:  /* Opção inválida */
                     printf("\e[1;32m>$ Opção inválida! Tente novamente.\e[0m\n");
                     break;
             }
         }
     } while (choice != '0');
 
-    free(fileName);
+    /* Libertação da memória alocada */
     destroyList(list);
     destroyQueue(ptr_queue);
+
     return 0;
 }
 
@@ -103,9 +105,11 @@ void printMenu() {
 }
 
 /* Pedir os dados ao utilizador */
-Booking askData(int check) {
+Booking askData(int check, int *validate) {
     Booking element;
-    
+    char choice, extra;
+    char *input = (char*) malloc (DATE_LENGTH * sizeof(char));
+
     /* Pedir o nome do cliente */
     int ctrl;
     do {
@@ -114,39 +118,46 @@ Booking askData(int check) {
         printf("Nome do cliente: ");
         scanf("%49[^\n]s", element.name);
         while(getchar() != '\n');  /* Limpeza do buffer */
-
         while (element.name[i] != '\0') {
-            if ( !((element.name[i] >= 'a' && element.name[i] <= 'z') || (element.name[i] >= 'A' && element.name[i] <= 'Z') || element.name[i] == ' ') ) {
+            if (!((element.name[i] >= 'a' && element.name[i] <= 'z') || (element.name[i] >= 'A' && element.name[i] <= 'Z') || element.name[i] == ' ')) {
                 ctrl = 1;  /* Inserido caracter não suportado */
             }
             i++;
         }
     } while (ctrl == 1);
 
+    /* Só é necessário pedir o serviço desejado ao tentar reservar */
     if (check == 1) {
-        /* Pedir o tipo de serviço desejado */
-        char opt[MAX_LENGTH];
+        /* Pedir o tipo de serviço desejado (lavagem: 30 minutos || manutenção: 1 hora) */
         do {
             printf("Serviço [1- Lavagem ou 2- Manutenção]: ");
-            scanf("%s", opt);
-            element.service = atoi(opt);
-        } while (element.service != 1 && element.service != 2);
+            choice = getchar();
+            if (choice != '\n') extra = getchar();  /* Auxilia a deteção da inserção de + do que 1 caracter */
+            if (extra != '\n' || choice == '\n') {  /* Se + do que 1 caracter foi inserido (ou nenhum) */
+                if (choice != '\n') while (getchar() != '\n');  /* Limpeza do buffer */
+                choice = 'r';  /* Sair do ciclo (reset) */
+            }
+        } while (choice != '1' && choice != '2');
+        element.service = choice - 48; /* '1' = 49 || '2' = 50 */
     }
 
     /* Pedir a data da reserva ou pré-reserva */
     do {
         printf("Data [DD/MM/AAAA]: ");
-        scanf("%d/%d/%d", &element.date.day, &element.date.month, &element.date.year);
-    } while (!check_date_validity(element));
-    
-    /* Pedir a hora da reserva ou pré-reserva */
-    do {
-        printf("Horário [ex: 08:00 ou 08:30] (das 8h às 18h): ");
-        scanf("%d:%d", &element.time.hour, &element.time.minutes);
-    } while (element.time.hour < 8 || element.time.hour > 17 || (element.time.minutes != 0 && element.time.minutes != 30) || (element.time.hour == 17 && element.time.minutes == 30 && element.service == 2));
+        scanf("%10[^\n]s", input);  /* Lê a entrada como uma string de até 10 caracteres */
+        while (getchar() != '\n');  /* Limpeza do buffer */   
+    } while (sscanf(input, "%d/%d/%d", &element.date.day, &element.date.month, &element.date.year) != 3 || !(*validate = check_date_validity(&element)));
 
-    while(getchar() != '\n');  /* Limpeza do buffer */
-    return element;  /* Devolução da struct já com os dados */
+    /* Pedir a hora da reserva ou pré-reserva */
+    input = realloc(input, TIME_LENGTH * sizeof(char));
+    if (*validate != 3) {  /* Se a data corresponde à data de sistema e a oficina já fechou */
+        do {
+            printf("Horário [ex: 08:00 ou 08:30] (das 8h às 18h): ");
+            scanf("%5[^\n]s", input);  /* Lê a entrada como uma string de até 5 caracteres */
+            while (getchar() != '\n');  /* Limpeza do buffer */
+        } while (sscanf(input, "%d:%d", &element.time.hour, &element.time.minutes) != 2 || element.time.hour < 8 || element.time.hour > 17 || (element.time.minutes != 0 && element.time.minutes != 30) || (element.time.hour == 17 && element.time.minutes == 30 && element.service == 2) || !check_time_validity(&element, *validate)); 
+    }
+    return element;  /* Devolução da struct, já com os dados */
 }
 
 /* Verifica se o ano é bissexto */
@@ -184,8 +195,8 @@ int is_valid_date(int day, int month, int year) {
     return 1;
 }
 
-/* Verifica se a data é posterior à data atual de sistema */
-int check_date_validity(Booking element) {
+/* Guarda a data de sistema atual */
+struct tm systemTime() {
     time_t current_time;
     struct tm *local_time;
 
@@ -193,15 +204,33 @@ int check_date_validity(Booking element) {
     current_time = time(NULL);
     local_time = localtime(&current_time);
 
-    /* Extrai o dia, mês e ano da data atual de sistema */
-    int current_day = local_time->tm_mday;
-    int current_month = local_time->tm_mon + 1;
-    int current_year = local_time->tm_year + 1900;
+    local_time->tm_mon = local_time->tm_mon + 1;
+    local_time->tm_year = local_time->tm_year + 1900;
 
-    /* A data deve ser posterior ou igual à data atual de sistema */
-    if (is_valid_date(element.date.day, element.date.month, element.date.year) && (element.date.year > current_year || (element.date.year == current_year && (element.date.month > current_month || (element.date.month == current_month && element.date.day >= current_day))))) {
-        return 1;  /* Data válida */
-    } else {
-        return 0;  /* Data inválida */
-    }
+    return *local_time;
 }
+
+/* Verifica se a data é posterior à data atual de sistema */
+int check_date_validity(Booking *element) {
+    struct tm system = systemTime();
+    /* Se a data inserida for exatamente igual à de sistema */
+    if (element->date.year == system.tm_year && element->date.month == system.tm_mon && element->date.day == system.tm_mday) {
+        if (system.tm_hour >= 18 || (system.tm_hour == 17 && system.tm_min > 30)) return 3; /* No dia de sistema atual já não são aceites reservas (oficina fechada) */
+        return 2;  /* Data igual à de sistema e a oficina está aberta */
+    }
+    if (is_valid_date(element->date.day, element->date.month, element->date.year) && (element->date.year > system.tm_year || (element->date.year == system.tm_year && (element->date.month > system.tm_mon || (element->date.month == system.tm_mon && element->date.day >= system.tm_mday)))))
+        return 1;  /* Data válida */ 
+    return 0;  /* Data inválida */
+}
+
+/* Se a data de sistema coincidir com a dada, verifica se o horário é posterior ao horário de sistema */
+int check_time_validity(Booking *element, int validate) {
+    struct tm system = systemTime();
+    if (validate != 2) return 1;  /* Hora válida */
+
+    /* Verifica se a hora fornecida é posterior ou igual à hora atual de sistema */
+    if (element->time.hour > system.tm_hour || (element->time.hour == system.tm_hour && element->time.minutes >= system.tm_min))
+        return 1;  /* Hora válida */
+    return 0;  /* Hora inválida */
+}
+

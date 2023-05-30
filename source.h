@@ -80,7 +80,7 @@ int toRes(ptr_list list, typeQueue *queue, Booking key); /* Quando uma reserva �
 
 /* Protótipos das funções relacionadas com as funcionalidades a implementar */
 
-void reserve(Booking element, ptr_list list, typeQueue *queue);  /* Reservar um serviço */
+void reserve(Booking element, ptr_list list, typeQueue *queue, int *validate);  /* Reservar um serviço */
 void preReserve(Booking element, typeQueue *queue);  /* Pré-reservar um serviço */
 void cancelRes(ptr_list list, typeQueue *queue, Booking key);  /* Cancelar uma reserva */
 void cancelPreRes(typeQueue *queue, Booking key);  /* Cancelar uma pré-reserva */

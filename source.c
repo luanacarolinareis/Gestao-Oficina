@@ -45,10 +45,13 @@ int timeCompare(Time first, Time second){
 }
 
 /* Reservar um serviço */
-void reserve(Booking element, ptr_list list, typeQueue *queue) {
+void reserve(Booking element, ptr_list list, typeQueue *queue, int *validate) {
     char answer;
     ptr_list current, previous;
-    
+    if (*validate == 3) {
+        printf("\nJá não existem horários disponíveis hoje.\n");
+        return;
+    }
     if (!searchItem(list, element, &previous, &current, 0)) {  /* Verifica se o elemento já existe, tendo em conta o nome */
         if (insertItemOrder(list, element)) {  /* Verifica a compatibilidade de horário */
             printf("\n\e[1;32mReserva efetuada com sucesso!\e[0m\n");
@@ -158,7 +161,6 @@ void checkFile(char fileName[]) {
         }
         /* Remoção dos prefixos "res_" ou "pre_", caso existam */
         if (!strcmp(aux,"res_") || !strcmp(aux, "pre_")) {
-            printf("\n%s\n", aux);
             char *p = fileName + 4;
             char *temp = fileName;  /* Usada para armazenar o valor de *p antes de incrementar p */
             while (*p != '\0') {
@@ -179,7 +181,7 @@ void loadInfo(char fileName[], ptr_list list, typeQueue *queue) {
     strcat(prefix, fileName);  /* Concatena o prefixo dado com o nome (já devidamente verificado) e guarda a alteração feita em 'prefix' */
 
     if ((fptr = fopen(prefix, "r")) == NULL) {  /* fopen("..\\res_t1.txt", "a") */
-        printf("Error opening file!\n");
+        printf("\n>$ Erro a abrir o ficheiro.\n");
         return;
     }
 
@@ -201,7 +203,7 @@ void loadInfo(char fileName[], ptr_list list, typeQueue *queue) {
     prefix[7]='e';
 
     if ((fptr = fopen(prefix, "r")) == NULL) {  /* fopen("..\\pre_t1.txt", "a") */
-        printf("Error opening file!\n");
+        printf("\n>$ Erro a abrir o ficheiro.\n");
         return;
     }
 
@@ -214,20 +216,22 @@ void loadInfo(char fileName[], ptr_list list, typeQueue *queue) {
         fscanf(fptr, "%d:%d\n\n", &element.time.hour, &element.time.minutes);
         addItem(queue, element);
     }
-
     fclose(fptr);
+    printf("\n\e[1;32m>$ Informação carregada com sucesso!\e[0m\n");
+    return;
 }
 
 /* Gravar o estado atual das reservas num ficheiro .txt */
 void saveInfo(char fileName[], ptr_list list, typeQueue *queue) {
     char prefix[50] = "data/res_";  /* Armazena um dos prefixos de ficheiro definidos */
-    ptr_list aux_list = list->next;
+    ptr_list aux_list = list->next;  /* Salta o header */
     noQueue *aux_queue = queue->first;
+    
     checkFile(fileName);  /* Verifica o nome do ficheiro dado */
     strcat(prefix, fileName);  /* Concatena o prefixo dado com o nome (já devidamente verificado) e guarda a alteração feita em 'prefix' */
     
     if ((fptr = fopen(prefix, "w")) == NULL) {  /* fopen("..\\res_t1.txt", "a") */
-        printf("Error opening file!\n");
+        printf("\n>$ Erro a abrir o ficheiro.\n");
         return;
     }
 
@@ -247,7 +251,7 @@ void saveInfo(char fileName[], ptr_list list, typeQueue *queue) {
     prefix[7]='e';
 
     if ((fptr = fopen(prefix, "w")) == NULL) {  /* fopen("..\\pre_t1.txt", "a") */
-        printf("Error opening file!\n");
+        printf("\n>$ Erro a abrir o ficheiro.\n");
         return;
     }
 
@@ -259,4 +263,6 @@ void saveInfo(char fileName[], ptr_list list, typeQueue *queue) {
         aux_queue = aux_queue->next;
     }
     fclose(fptr);
+    printf("\n\e[1;32m>$ Informação gravada com sucesso!\e[0m\n");
+    return;
 }
