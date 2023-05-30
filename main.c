@@ -13,7 +13,7 @@ Booking askData(int check, int *validate);  /* Pedir os dados ao utilizador */
 
 int is_leap_year(int year);  /* Verifica se o ano é bissexto */
 int is_valid_date(int day, int month, int year);  /* Verifica a validade do formato da data */
-struct tm systemTime();  /* Guarda a data de sistema atual */
+struct tm systemTime();  /* Guarda a data e hora de sistema atual */
 int check_date_validity(Booking *element);  /* Verifica se a data é posterior à data de sistema */
 int check_time_validity(Booking *element, int validate);  /* Se a data de sistema coincidir com a dada, verifica se o horário é posterior ao horário de sistema */
 
@@ -195,7 +195,7 @@ int is_valid_date(int day, int month, int year) {
     return 1;
 }
 
-/* Guarda a data de sistema atual */
+/* Guarda a data e hora de sistema atual */
 struct tm systemTime() {
     time_t current_time;
     struct tm *local_time;
