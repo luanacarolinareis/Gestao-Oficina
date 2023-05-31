@@ -94,14 +94,8 @@ int timeCompare(Time first, Time second){
 
 /* Corrige o horário */
 void timeFix(Time *element) {
-    if (element->minutes == 60) {
-        element->hour ++;
-        element->minutes = 0;
-    }
-    if (element->minutes == 90) {
-        element->hour ++;
-        element->minutes = 30;
-    }
+    element->hour += element->minutes / 60;  /* Adiciona às horas o equivalente em minutos */
+    element->minutes -= 60 * (element->minutes / 60);  /* Retira o excesso dos minutos */
 }
 
 /* Reservar um serviço */

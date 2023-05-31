@@ -159,47 +159,37 @@ int insertItemOrder(ptr_list list, Booking element) {
 /* Listar as reservas disponíveis num determinado dia */
 int printAvailableTime(ptr_list list, Date *date) {
     ptr_list aux = list->next;  /* Salta o header */
-    Time ini = {8, 0}, end = {8, 30};
-    int check = 0, count = 0;
+    Time ini = {8, 0}, end = {18, 0};  /* 'ini' começa com o horário de início de funcionamento da oficina, 'end' tem o horário de fim */
+    int check = 0, count = 0;  /* 'count' verifica se houve algum horário disponível */
 
-    while (aux) {
-        if (dateCompare(aux->itemList.date, *date) == 0) {  /* As datas são iguais */
-            if (timeCompare(aux->itemList.time, ini) == 0) {  /* O horário é igual*/
-                ini.hour = aux->itemList.time.hour;
-                ini.minutes = aux->itemList.time.minutes + 30 * aux->itemList.service;
-                timeFix(&ini);  /* Correção do horário */
-                end = ini;
-                end.minutes += 30;
-                timeFix(&end);  /* Correção do horário */
-                check=1;
-            }
-            if (!check) {
+    while (aux) {  /* Percorre a linked list */
+        if (dateCompare(aux->itemList.date,*date) == 0) {  /* Ao encontrar uma reserva com a data igual à dada */
+            if (timeCompare(aux->itemList.time, ini) == 0)  /* Se a reserva tiver tempo de início igual ao 'ini' atual */
+                check = 1;  /* Não será printada, ou seja, vai ser saltado o intervalo de tempo dessa reserva */
+            
+            if (!check) {  /* Se for uma reserva com tempo de início depois do guardado em 'ini', vai ser printado o intervalo entre 'ini' e o início da reserva */
                 printf("%d:%d -- %d:%d\n", ini.hour, ini.minutes, aux->itemList.time.hour, aux->itemList.time.minutes);
                 count = 1;
             }
-            check = 0;
-            while (timeCompare(aux->itemList.time, end) == -1) {
-                end.minutes += 30;
-                timeFix(&end);  /* Correção do horário */
-            }
+            check=0;
+
+            /* 'ini' vai agora ser o tempo de fim da reserva atual */
             ini.hour = aux->itemList.time.hour;
             ini.minutes = aux->itemList.time.minutes + 30 * aux->itemList.service;
-            timeFix(&ini);  /* Correção do horário */
-            end = ini;
-            end.minutes += 30;
-            timeFix(&end);  /* Correção do horário */
+
+            timeFix(&ini);  /* Correção dos minutos e das horas de 'ini' */
         }
-        if (dateCompare(aux->itemList.date,*date) == -1) break;
+        if (dateCompare(aux->itemList.date, *date) == -1) /* Reserva com data superior, vai parar imediatamente de percorrer */
+            break;
         aux = aux->next;
     }
-    end.hour = 18;
-    end.minutes = 0;
-    if (timeCompare(ini, end) != 0) {
+    if (timeCompare(ini, end) != 0) {  /* Se o tempo de fim da última reserva daquele dia não for 18:00, é printado o último intervalo de tempo, desde 'ini' até às 18:00 */
         printf("%d:%d -- 18:00\n", ini.hour, ini.minutes);
         count = 1;
     }
     return count;
 }
+
 
 /* Devolve o tamanho da linked list */
 int getListSize(ptr_list list) {
