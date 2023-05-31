@@ -199,6 +199,11 @@ void updateServices(typeQueue *queue, ptr_list list, Booking key) {
 
 /* Verificar o início do nome de um ficheiro */
 void checkFile(char fileName[]) {
+    int i = strcspn(fileName, "\0");  /* Devolve o último índice */
+    if (fileName[i - 4] != '.' || fileName[i - 3] != 't' || fileName[i - 2] != 'x' || fileName[i - 1] != 't') {
+        fileName[i] = '.'; fileName[i + 1] = 't'; fileName[i + 2] = 'x'; fileName[i + 3] = 't'; fileName[i + 4] = '\0';
+    }
+    
     char aux[5] = {}; /* Armazena os 4 caracteres iniciais do nome inserido pelo utilizador (para posterior comparação) */
     if (strlen(fileName) > 4) {
         for (int i = 0; i < 4; i++) {

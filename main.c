@@ -22,7 +22,7 @@ int main() {
     printf("\n\e[0;34m»»»» GESTÃO DE RESERVAS DE OFICINA ««««\e[0m\n");
 
     /* Declaração de variáveis e pointers */
-    int validate, i;
+    int validate;
     char choice, extra;
     char fileName[MAX_LENGTH];
     char str_available_data[DATE_LENGTH];
@@ -54,20 +54,12 @@ int main() {
                     printf("\e[1;32m>$ Nome do ficheiro [ex: t1.txt]: \e[0m ");
                     scanf("%45[^\n]s", fileName);
                     while (getchar() != '\n');  /* Limpeza do buffer */
-                    i = strcspn(fileName, "\0");  /* Devolve o último índice */
-                    if (fileName[i - 4] != '.' || fileName[i - 3] != 't' || fileName[i - 2] != 'x' || fileName[i - 1] != 't') {
-                        fileName[i] = '.'; fileName[i + 1] = 't'; fileName[i + 2] = 'x'; fileName[i + 3] = 't'; fileName[i + 4] = '\0';
-                    }
                     loadInfo(fileName, list, ptr_queue);
                     break;
                 case '2':  /* Gravar o estado atual das reservas */
                     printf("\e[1;32m>$ Nome do ficheiro [ex: t1.txt]: \e[0m");
                     scanf("%45[^\n]s", fileName);
                     while (getchar() != '\n');  /* Limpeza do buffer */
-                    i = strcspn(fileName, "\0");  /* Devolve o último índice */
-                    if (fileName[i - 4] != '.' || fileName[i - 3] != 't' || fileName[i - 2] != 'x' || fileName[i - 1] != 't') {
-                        fileName[i] = '.'; fileName[i + 1] = 't'; fileName[i + 2] = 'x'; fileName[i + 3] = 't'; fileName[i + 4] = '\0';
-                    }
                     saveInfo(fileName, list, ptr_queue);
                     break;
                 case '3':  /* Reservar lavagem ou manutenção */
