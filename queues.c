@@ -165,12 +165,17 @@ int toRes(ptr_list list, typeQueue *queue, Booking key) {
 
             if (choice == 's' || choice == 'S') {  /* Se sim, tenta inseri-la */
                 element = aux->itemQueue;  /* Copia para um elemento auxiliar e muda a data e hora*/
-                element.date = key.date;
+                
                 if (insertItemOrder(list, element)) {  /* Tenta inserir e se inserir com sucesso, pode sair da função, removendo a pré-reserva */
                     removeItemQueue(queue, aux->itemQueue);
                     return 1;
                 }
-                element.time = key.time;
+                element.date = key.date;  /* Altera a data */
+                if (insertItemOrder(list, element)) {  /* Tenta inserir e se inserir com sucesso, pode sair da função, removendo a pré-reserva */
+                    removeItemQueue(queue, aux->itemQueue);
+                    return 1;
+                }
+                element.time = key.time;  /* Altera o horário */
                 if (insertItemOrder(list, element)) {  /* Tenta inserir e se inserir com sucesso, pode sair da função, removendo a pré-reserva */
                     removeItemQueue(queue, aux->itemQueue);
                     return 1;

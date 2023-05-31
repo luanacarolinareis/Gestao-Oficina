@@ -10,13 +10,13 @@
 #define TIME_LENGTH 6  /* Tamanho máximo de um formato de horário */
 
 void printMenu();  /* Menu principal */
-Booking askData(int check, int *validate);  /* Pedir os dados ao utilizador */
+Booking askData(int check, int *validate, int isCancel);  /* Pedir os dados ao utilizador */
 
 int is_leap_year(int year);  /* Verifica se o ano é bissexto */
 int is_valid_date(int day, int month, int year);  /* Verifica a validade do formato da data */
 struct tm systemTime();  /* Guarda a data e hora de sistema atual */
-int check_date_validity(Booking *element);  /* Verifica se a data é posterior à data de sistema */
-int check_time_validity(Booking *element, int validate);  /* Se a data de sistema coincidir com a dada, verifica se o horário é posterior ao horário de sistema */
+int check_date_validity(Booking *element, int isCancel);  /* Verifica se a data é posterior à data de sistema */
+int check_time_validity(Booking *element, int validate, int isCancel);  /* Se a data de sistema coincidir com a dada, verifica se o horário é posterior ao horário de sistema */
 
 int main() {
     printf("\n\e[0;34m»»»» GESTÃO DE RESERVAS DE OFICINA ««««\e[0m\n");
@@ -68,13 +68,13 @@ int main() {
                     saveInfo(fileName, list, ptr_queue);
                     break;
                 case '3':  /* Reservar lavagem ou manutenção */
-                    reserve(askData(1, &validate), list, ptr_queue, &validate);  /* O parâmetro 1 apenas auxilia no pedido do serviço ao utilizador */
+                    reserve(askData(1, &validate, 0), list, ptr_queue, &validate);  /* O parâmetro 1 apenas auxilia no pedido do serviço ao utilizador */
                     break;
                 case '4': /* Cancelar reserva */
-                    cancelRes(list, ptr_queue, askData(0, &validate));
+                    cancelRes(list, ptr_queue, askData(0, &validate, 1));
                     break;
                 case '5':  /* Cancelar pré-reserva */
-                    cancelPreRes(ptr_queue, askData(0, &validate));
+                    cancelPreRes(ptr_queue, askData(0, &validate, 1));
                     break;
                 case '6':  /* Listar todas as reservas e pré-reservas (+ antigas primeiro) */
                     listingRes(list, ptr_queue, 6);  /* O parâmetro 6 auxilia o print das reservas da + antiga para a mais recente */
@@ -83,7 +83,9 @@ int main() {
                     listingClient(list, ptr_queue, 7);  /* O parâmetro 7 auxilia o print das reservas da + recente para a mais antiga */
                     break;
                 case '8':  /* Realizar uma lavagem ou manutenção */
-                    updateServices(ptr_queue, list, askData(0, &validate));
+                    updateServices(ptr_queue, list, askData(0, &validate, 1));
+                    break;
+                case '9':  /* Listar as reservas disponíveis num determinado dia */
                     break;
                 default:  /* Opção inválida */
                     printf("\e[1;32m>$ Opção inválida! Tente novamente.\e[0m\n");
@@ -114,7 +116,7 @@ void printMenu() {
 }
 
 /* Pedir os dados ao utilizador */
-Booking askData(int check, int *validate) {
+Booking askData(int check, int *validate, int isCancel) {
     Booking element;
     char choice, extra;
     char *input = (char*) malloc (DATE_LENGTH * sizeof(char));
@@ -141,16 +143,16 @@ Booking askData(int check, int *validate) {
         printf("Data [DD/MM/AAAA]: ");
         scanf("%10[^\n]s", input);  /* Lê a entrada como uma string de até 10 caracteres */
         while (getchar() != '\n');  /* Limpeza do buffer */   
-    } while (sscanf(input, "%d/%d/%d", &element.date.day, &element.date.month, &element.date.year) != 3 || !(*validate = check_date_validity(&element)));
+    } while (sscanf(input, "%d/%d/%d", &element.date.day, &element.date.month, &element.date.year) != 3 || !(*validate = check_date_validity(&element, isCancel)));
 
     /* Pedir a hora da reserva ou pré-reserva */
     input = realloc(input, TIME_LENGTH * sizeof(char));
-    if (*validate != 3) {  /* Se a data corresponde à data de sistema e a oficina já fechou */
+    if (*validate != 3 || isCancel) {  /* Se a data corresponde à data de sistema e a oficina já fechou */
         do {
             printf("Horário [ex: 08:00 ou 08:30] (das 8h às 18h): ");
             scanf("%5[^\n]s", input);  /* Lê a entrada como uma string de até 5 caracteres */
             while (getchar() != '\n');  /* Limpeza do buffer */
-        } while (sscanf(input, "%d:%d", &element.time.hour, &element.time.minutes) != 2 || element.time.hour < 8 || element.time.hour > 17 || (element.time.minutes != 0 && element.time.minutes != 30) || (element.time.hour == 17 && element.time.minutes == 30 && element.service == 2) || !check_time_validity(&element, *validate)); 
+        } while (sscanf(input, "%d:%d", &element.time.hour, &element.time.minutes) != 2 || element.time.hour < 8 || element.time.hour > 17 || (element.time.minutes != 0 && element.time.minutes != 30) || (element.time.hour == 17 && element.time.minutes == 30 && element.service == 2) || !check_time_validity(&element, *validate, isCancel)); 
     }
     free(input);
     return element;  /* Devolução da struct, já com os dados */
@@ -207,25 +209,25 @@ struct tm systemTime() {
 }
 
 /* Verifica se a data é posterior à data atual de sistema */
-int check_date_validity(Booking *element) {
+int check_date_validity(Booking *element, int isCancel) {
     struct tm system = systemTime();
     /* Se a data inserida for exatamente igual à de sistema */
     if (element->date.year == system.tm_year && element->date.month == system.tm_mon && element->date.day == system.tm_mday) {
         if (system.tm_hour >= 18 || (system.tm_hour == 17 && system.tm_min > 30)) return 3; /* No dia de sistema atual já não são aceites reservas (oficina fechada) */
         return 2;  /* Data igual à de sistema e a oficina está aberta */
     }
-    if (is_valid_date(element->date.day, element->date.month, element->date.year) && (element->date.year > system.tm_year || (element->date.year == system.tm_year && (element->date.month > system.tm_mon || (element->date.month == system.tm_mon && element->date.day >= system.tm_mday)))))
+    if (is_valid_date(element->date.day, element->date.month, element->date.year) && (isCancel || (element->date.year > system.tm_year || (element->date.year == system.tm_year && (element->date.month > system.tm_mon || (element->date.month == system.tm_mon && element->date.day >= system.tm_mday))))))
         return 1;  /* Data válida */ 
     return 0;  /* Data inválida */
 }
 
 /* Se a data de sistema coincidir com a dada, verifica se o horário é posterior ao horário de sistema */
-int check_time_validity(Booking *element, int validate) {
+int check_time_validity(Booking *element, int validate, int isCancel) {
     struct tm system = systemTime();
     if (validate != 2) return 1;  /* Hora válida */
 
     /* Verifica se a hora fornecida é posterior ou igual à hora atual de sistema */
-    if (element->time.hour > system.tm_hour || (element->time.hour == system.tm_hour && element->time.minutes >= system.tm_min))
+    if (isCancel || element->time.hour > system.tm_hour || (element->time.hour == system.tm_hour && element->time.minutes >= system.tm_min))
         return 1;  /* Hora válida */
     return 0;  /* Hora inválida */
 }
