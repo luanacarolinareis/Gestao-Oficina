@@ -128,7 +128,15 @@ Booking askData(int check, int *validate) {
         scanf("%49[^\n]s", element.name);
         while (getchar() != '\n');  /* Limpeza do buffer */
         while (element.name[i] != '\0') {
-            if (!((element.name[i] >= 'a' && element.name[i] <= 'z') || (element.name[i] >= 'A' && element.name[i] <= 'Z') || element.name[i] == ' ')) {
+            if (!((element.name[i] >= 'a' && element.name[i] <= 'z') || 
+                (element.name[i] >= 'A' && element.name[i] <= 'Z') || 
+                (element.name[i] == ' ') || 
+                (strchr("ç", element.name[i]) != NULL) || 
+                (strchr("ã", element.name[i]) != NULL) || 
+                (strchr("á", element.name[i]) != NULL) || 
+                (strchr("é", element.name[i]) != NULL) || 
+                (strchr("í", element.name[i]) != NULL) || 
+                (strchr("ó", element.name[i]) != NULL))) {
                 ctrl = 1;  /* Inserido caracter não suportado */
             }
             if (element.name[i] <= 'Z' && element.name[i] >= 'A') element.name[i] = tolower(element.name[i]);

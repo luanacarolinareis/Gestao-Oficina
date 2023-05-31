@@ -142,7 +142,15 @@ void listingClient(ptr_list list, typeQueue *queue, int check) {
         scanf("%49[^\n]s", name);
         while(getchar() != '\n');  /* Limpeza do buffer */
         while (name[i] != '\0') {
-            if ( !((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= 'A' && name[i] <= 'Z') || name[i] == ' ') ) {
+            if (!((name[i] >= 'a' && name[i] <= 'z') || 
+                (name[i] >= 'A' && name[i] <= 'Z') || 
+                (name[i] == ' ') || 
+                (strchr("ç", name[i]) != NULL) || 
+                (strchr("ã", name[i]) != NULL) || 
+                (strchr("á", name[i]) != NULL) || 
+                (strchr("é", name[i]) != NULL) || 
+                (strchr("í", name[i]) != NULL) || 
+                (strchr("ó", name[i]) != NULL))) {
                 ctrl = 1;  /* Inserido caracter não suportado */
             }
             i++;
