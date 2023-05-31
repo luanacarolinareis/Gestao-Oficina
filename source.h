@@ -30,6 +30,7 @@ void printData(Booking *element);  /* Printa os dados de uma reserva ou pré-res
 int dateCompare(Date first, Date second);  /* Compara duas datas */
 int timeCompatibility(Time first, Time second, int duration);  /* Verifica se o tempo de fim de uma reserva é compatível com o início de outra */
 int timeCompare(Time first, Time second);  /* Compara dois horários */
+void timeFix(Time *element);  /* Corrige o horário */
 
 // -----------------------------------------------------------------------------------------------------
 
@@ -51,6 +52,7 @@ int searchItem(ptr_list list, Booking key, ptr_list *previous, ptr_list *current
 void searchClient(ptr_list list, char *name, int *n);  /* Procura e imprime todas as reservas de um cliente (por recursividade)*/
 void printList(ptr_list list);  /* Printar a linked list */
 int insertItemOrder(ptr_list list, Booking element);  /* Insere a nova reserva, por ordem, e retorna um inteiro que diz se foi ou não possível inserir */
+int printAvailableTime(ptr_list list, Date *date);  /* Listar as reservas disponíveis num determinado dia */
 int getListSize(ptr_list list);  /* Devolve o tamanho da linked list */
 
 // -----------------------------------------------------------------------------------------------------

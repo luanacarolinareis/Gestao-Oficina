@@ -92,6 +92,18 @@ int timeCompare(Time first, Time second){
     return 1;  /* Se o segundo for maior devolve 1 */
 }
 
+/* Corrige o horário */
+void timeFix(Time *element) {
+    if (element->minutes == 60) {
+        element->hour ++;
+        element->minutes = 0;
+    }
+    if (element->minutes == 90) {
+        element->hour ++;
+        element->minutes = 30;
+    }
+}
+
 /* Reservar um serviço */
 void reserve(Booking element, ptr_list list, typeQueue *queue, int *validate) {
     char choice, extra;

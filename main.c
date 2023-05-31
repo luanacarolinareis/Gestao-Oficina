@@ -25,6 +25,9 @@ int main() {
     int validate, i;
     char choice, extra;
     char fileName[MAX_LENGTH];
+    char str_available_data[DATE_LENGTH];
+    Booking available; 
+
     typeQueue *ptr_queue = (typeQueue *) malloc (sizeof(typeQueue));  /* Alocação de memória para o pointer da queue */
     ptr_list list = createList();  /* Alocação de memória para o pointer da linked list, juntamente com a sua criação */
     if (ptr_queue == NULL || list == NULL) {
@@ -86,6 +89,13 @@ int main() {
                     updateServices(ptr_queue, list, askData(0, &validate, 1));
                     break;
                 case '9':  /* Listar as reservas disponíveis num determinado dia */
+                    do {
+                        printf("Data [DD/MM/AAAA]: ");
+                        scanf("%10[^\n]s", str_available_data);  /* Lê a entrada como uma string de até 10 caracteres */
+                        while (getchar() != '\n');  /* Limpeza do buffer */
+                    } while (sscanf(str_available_data, "%d/%d/%d", &available.date.day, &available.date.month, &available.date.year) != 3 || !(check_date_validity(&available, 0)));
+                    printf("\n");
+                    if (!printAvailableTime(list, &available.date)) printf("Não há horários disponíveis nesse dia.\n");
                     break;
                 default:  /* Opção inválida */
                     printf("\e[1;32m>$ Opção inválida! Tente novamente.\e[0m\n");
@@ -112,6 +122,7 @@ void printMenu() {
     printf("\e[1;32m[ 6 ]\e[0m Listar todas as reservas e pré-reservas\n");
     printf("\e[1;32m[ 7 ]\e[0m Listar as reservas e pré-reservas de um cliente\n");
     printf("\e[1;32m[ 8 ]\e[0m Realizar uma lavagem ou manutenção\n");
+    printf("\e[1;32m[ 9 ]\e[0m Listar as reservas disponíveis por dia\n");
     printf("\n\e[1;32m>$ OPÇÃO: \e[0m");
 }
 

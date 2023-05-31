@@ -156,6 +156,51 @@ int insertItemOrder(ptr_list list, Booking element) {
     return 1;
 }
 
+/* Listar as reservas disponíveis num determinado dia */
+int printAvailableTime(ptr_list list, Date *date) {
+    ptr_list aux = list->next;  /* Salta o header */
+    Time ini = {8, 0}, end = {8, 30};
+    int check = 0, count = 0;
+
+    while (aux) {
+        if (dateCompare(aux->itemList.date, *date) == 0) {  /* As datas são iguais */
+            if (timeCompare(aux->itemList.time, ini) == 0) {  /* O horário é igual*/
+                ini.hour = aux->itemList.time.hour;
+                ini.minutes = aux->itemList.time.minutes + 30 * aux->itemList.service;
+                timeFix(&ini);  /* Correção do horário */
+                end = ini;
+                end.minutes += 30;
+                timeFix(&end);  /* Correção do horário */
+                check=1;
+            }
+            if (!check) {
+                printf("%d:%d -- %d:%d\n", ini.hour, ini.minutes, aux->itemList.time.hour, aux->itemList.time.minutes);
+                count = 1;
+            }
+            check = 0;
+            while (timeCompare(aux->itemList.time, end) == -1) {
+                end.minutes += 30;
+                timeFix(&end);  /* Correção do horário */
+            }
+            ini.hour = aux->itemList.time.hour;
+            ini.minutes = aux->itemList.time.minutes + 30 * aux->itemList.service;
+            timeFix(&ini);  /* Correção do horário */
+            end = ini;
+            end.minutes += 30;
+            timeFix(&end);  /* Correção do horário */
+        }
+        if (dateCompare(aux->itemList.date,*date) == -1) break;
+        aux = aux->next;
+    }
+    end.hour = 18;
+    end.minutes = 0;
+    if (timeCompare(ini, end) != 0) {
+        printf("%d:%d -- 18:00\n", ini.hour, ini.minutes);
+        count = 1;
+    }
+    return count;
+}
+
 /* Devolve o tamanho da linked list */
 int getListSize(ptr_list list) {
     ptr_list aux = list->next;
