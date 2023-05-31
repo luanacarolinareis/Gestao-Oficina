@@ -22,12 +22,15 @@ void checkName(char *name) {
             name[i] = tolower(name[i]);
             if (!((name[i] >= 'a' && name[i] <= 'z') || 
                 (name[i] == ' ') || 
-                (strchr("ç", name[i]) != NULL) || 
-                (strchr("ã", name[i]) != NULL) || 
                 (strchr("á", name[i]) != NULL) || 
                 (strchr("é", name[i]) != NULL) || 
                 (strchr("í", name[i]) != NULL) || 
-                (strchr("ó", name[i]) != NULL))) {
+                (strchr("ó", name[i]) != NULL) || 
+                (strchr("ú", name[i]) != NULL) || 
+                (strchr("ã", name[i]) != NULL) || 
+                (strchr("â", name[i]) != NULL) || 
+                (strchr("ê", name[i]) != NULL) || 
+                (strchr("ç", name[i]) != NULL))) {
                 ctrl = 1;  /* Inserido caracter não suportado */
             }
             i++;
