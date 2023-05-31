@@ -19,8 +19,10 @@ typedef struct {
     Time time;
 } Booking;
 
-/* Protótipo de função que printa os dados de uma reserva ou pré-reserva */
-void printData(Booking *element);
+/* Protótipos de funções relacionadas com o print de reservas e pré-reservas */
+
+void capitalizeWords(char *name);  /* Capitaliza as letras de um nome (NOME PRÓPRIO + APELIDO) */
+void printData(Booking *element);  /* Printa os dados de uma reserva ou pré-reserva */
 
 /* Protótipos das funções relacionadas com a comparação de structs */
 
@@ -42,8 +44,8 @@ typedef noList *ptr_list;
 
 ptr_list createList();  /* A linked list é criada */
 int emptyList(ptr_list list);  /* Verifica se a linked list está vazia */
-ptr_list destroyList(ptr_list list);  /* A linked list é destruída */
-int removeItem1(ptr_list list, Booking key, int check);  /* Remoção de um elemento da linked list */
+ptr_list destroyList(ptr_list list, int check);  /* A linked list é destruída */
+int removeItemList(ptr_list list, Booking key, int check);  /* Remoção de um elemento da linked list */
 int searchItem(ptr_list list, Booking key, ptr_list *previous, ptr_list *current, int check);  /* Procurar um item na linked list (encontrar uma reserva no mesmo dia e horário) */
 void searchClient(ptr_list list, char *name, int *n);  /* Procura e imprime todas as reservas de um cliente (por recursividade)*/
 void printList(ptr_list list);  /* Printar a linked list */
@@ -68,8 +70,8 @@ typedef struct typeQueue {
 
 void createQueue (typeQueue *queue);  /* A queue é criada */
 int emptyQueue(typeQueue *queue);  /* Verifica se a queue está vazia */
-void destroyQueue(typeQueue *queue);  /* A queue é destruída */
-int removeItem2(typeQueue *queue, Booking key);  /* Remoção de um elemento em qualquer local da queue */
+void destroyQueue(typeQueue *queue, int check);  /* A queue é destruída */
+int removeItemQueue(typeQueue *queue, Booking key);  /* Remoção de um elemento em qualquer local da queue */
 void removePastItems(typeQueue *queue, Booking key);  /* Remoção de todos os elementos anteriores a uma data e hora */
 void addItem(typeQueue *queue, Booking element);  /* Adição de um elemento ao final da queue */
 int comparator(const void *first, const void *second); /* Devolve inteiro positivo, negativo ou nulo, conforme o primeiro argumento é posterior, anterior ou igual ao segundo */

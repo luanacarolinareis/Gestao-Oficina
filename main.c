@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 #include <time.h>
 #include "source.h"
@@ -21,7 +22,7 @@ int main() {
     printf("\n\e[0;34m»»»» GESTÃO DE RESERVAS DE OFICINA ««««\e[0m\n");
 
     /* Declaração de variáveis e pointers */
-    int validate;
+    int validate, i;
     char choice, extra;
     char fileName[MAX_LENGTH];
     typeQueue *ptr_queue = (typeQueue *) malloc (sizeof(typeQueue));  /* Alocação de memória para o pointer da queue */
@@ -48,14 +49,22 @@ int main() {
                     break;
                 case '1':  /* Carregar informação */
                     printf("\e[1;32m>$ Nome do ficheiro [ex: t1.txt]: \e[0m ");
-                    scanf("%49[^\n]s", fileName);
-                    while(getchar() != '\n');  /* Limpeza do buffer */
+                    scanf("%45[^\n]s", fileName);
+                    while (getchar() != '\n');  /* Limpeza do buffer */
+                    i = strcspn(fileName, "\0");  /* Devolve o último índice */
+                    if (fileName[i - 4] != '.' || fileName[i - 3] != 't' || fileName[i - 2] != 'x' || fileName[i - 1] != 't') {
+                        fileName[i] = '.'; fileName[i + 1] = 't'; fileName[i + 2] = 'x'; fileName[i + 3] = 't'; fileName[i + 4] = '\0';
+                    }
                     loadInfo(fileName, list, ptr_queue);
                     break;
                 case '2':  /* Gravar o estado atual das reservas */
                     printf("\e[1;32m>$ Nome do ficheiro [ex: t1.txt]: \e[0m");
-                    scanf("%49[^\n]s", fileName);
-                    while(getchar() != '\n');  /* Limpeza do buffer */
+                    scanf("%45[^\n]s", fileName);
+                    while (getchar() != '\n');  /* Limpeza do buffer */
+                    i = strcspn(fileName, "\0");  /* Devolve o último índice */
+                    if (fileName[i - 4] != '.' || fileName[i - 3] != 't' || fileName[i - 2] != 'x' || fileName[i - 1] != 't') {
+                        fileName[i] = '.'; fileName[i + 1] = 't'; fileName[i + 2] = 'x'; fileName[i + 3] = 't'; fileName[i + 4] = '\0';
+                    }
                     saveInfo(fileName, list, ptr_queue);
                     break;
                 case '3':  /* Reservar lavagem ou manutenção */
@@ -84,8 +93,8 @@ int main() {
     } while (choice != '0');
 
     /* Libertação da memória alocada */
-    destroyList(list);
-    destroyQueue(ptr_queue);
+    destroyList(list, 1);
+    destroyQueue(ptr_queue, 1);
 
     return 0;
 }
@@ -117,11 +126,12 @@ Booking askData(int check, int *validate) {
         int i = 0;
         printf("Nome do cliente: ");
         scanf("%49[^\n]s", element.name);
-        while(getchar() != '\n');  /* Limpeza do buffer */
+        while (getchar() != '\n');  /* Limpeza do buffer */
         while (element.name[i] != '\0') {
             if (!((element.name[i] >= 'a' && element.name[i] <= 'z') || (element.name[i] >= 'A' && element.name[i] <= 'Z') || element.name[i] == ' ')) {
                 ctrl = 1;  /* Inserido caracter não suportado */
             }
+            if (element.name[i] <= 'Z' && element.name[i] >= 'A') element.name[i] = tolower(element.name[i]);
             i++;
         }
     } while (ctrl == 1);
@@ -157,6 +167,7 @@ Booking askData(int check, int *validate) {
             while (getchar() != '\n');  /* Limpeza do buffer */
         } while (sscanf(input, "%d:%d", &element.time.hour, &element.time.minutes) != 2 || element.time.hour < 8 || element.time.hour > 17 || (element.time.minutes != 0 && element.time.minutes != 30) || (element.time.hour == 17 && element.time.minutes == 30 && element.service == 2) || !check_time_validity(&element, *validate)); 
     }
+    free(input);
     return element;  /* Devolução da struct, já com os dados */
 }
 
@@ -233,4 +244,3 @@ int check_time_validity(Booking *element, int validate) {
         return 1;  /* Hora válida */
     return 0;  /* Hora inválida */
 }
-

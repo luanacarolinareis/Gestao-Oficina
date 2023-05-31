@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 #include "source.h"
 
@@ -6,12 +8,28 @@
 
 FILE *fptr;  /* Pointer para o início de um ficheiro */
 
+/* Capitaliza as letras de um nome (NOME PRÓPRIO + APELIDO) */
+void capitalizeWords(char *name) {
+    int flag = 1; /* Flag que indica se a próxima letra deve ser capitalizada */
+    for (int i = 0; name[i] != '\0'; i++) {
+        if (flag && name[i] != ' ') {
+            name[i] = toupper(name[i]); // Converte a letra atual em maiúscula
+            flag = 0;
+        } else if (name[i] == ' ') {
+            flag = 1; // Define a flag para capitalizar a próxima letra após um espaço
+        }
+    }
+}
+
 /* Printa os dados de uma reserva ou pré-reserva */
 void printData(Booking *element) {
-    printf("\nNome do cliente: %s", element->name);
+    char aux[MAX_LENGTH];
+    strcpy(aux, element->name);  /* Variável auxiliar para printar o nome capitalizado */
+    capitalizeWords(aux);  /* O nome é convertido para formato capitalizado */
+    printf("\nNome do cliente: %s", aux);
     printf("\nServiço [1- Lavagem ou 2- Manutenção]: %d\n", element->service);
-    printf("Data [DD/MM/AAAA]: %d/%d/%d\n", element->date.day, element->date.month, element->date.year);
-    printf("Horário [HH:MM]: %d:%d\n", element->time.hour, element->time.minutes);
+    printf("Data [DD/MM/AAAA]: %02d/%02d/%04d\n", element->date.day, element->date.month, element->date.year);
+    printf("Horário [HH:MM]: %02d:%02d\n", element->time.hour, element->time.minutes);
     return;
 }
 
@@ -46,7 +64,7 @@ int timeCompare(Time first, Time second){
 
 /* Reservar um serviço */
 void reserve(Booking element, ptr_list list, typeQueue *queue, int *validate) {
-    char answer;
+    char choice, extra;
     ptr_list current, previous;
     if (*validate == 3) {
         printf("\nJá não existem horários disponíveis hoje.\n");
@@ -59,13 +77,17 @@ void reserve(Booking element, ptr_list list, typeQueue *queue, int *validate) {
             printf("\n\e[1;33mDe momento, o horário desejado está ocupado.\e[0m\n");
             do {
                 printf("Pretende fazer uma pré-reserva [S/N]? ");
-                scanf("%c", &answer);
-                while(getchar() != '\n');  /* Limpeza do buffer */
-            } while (answer != 's' && answer != 'S' && answer != 'n' && answer != 'N');
-            if (answer == 's' || answer == 'S') preReserve(element, queue);
+                choice = getchar();
+                if (choice != '\n') extra = getchar();  /* Auxilia a deteção da inserção de + do que 1 caracter */
+                if (extra != '\n' || choice == '\n') {  /* Se + do que 1 caracter foi inserido (ou nenhum) */
+                    if (choice != '\n') while (getchar() != '\n');  /* Limpeza do buffer */
+                    choice = 'r';  /* Sair do ciclo (reset) */
+                }
+            } while (tolower(choice) != 's' && tolower(choice) != 'n');
+            if (tolower(choice) == 's') preReserve(element, queue);
         }
     } else {
-        printf("\n\e[1;33mJá existe uma reserva nessa data e horário!\e[0m\n");
+        printf("\n\e[1;33mJá tem uma reserva nessa data e horário!\e[0m\n");
     }
     return;
 }
@@ -79,7 +101,7 @@ void preReserve(Booking element, typeQueue *queue) {
 
 /* Cancelar uma reserva */
 void cancelRes(ptr_list list, typeQueue *queue, Booking key) {
-    if(removeItem1(list, key, 0)) {
+    if(removeItemList(list, key, 0)) {
         printf("\n\e[1;32mElemento removido com sucesso!\e[0m\n"); /* Remover a pré-reserva da queue */
         if(toRes(list, queue, key)) printf("\n\e[1;32mElemento movido para reserva com sucesso!\e[0m\n");  /* Tenta inserir uma pré-reserva no lugar da reserva cancelada */
         else printf("Não foi movido nenhum elemento para reserva.\n");
@@ -90,7 +112,7 @@ void cancelRes(ptr_list list, typeQueue *queue, Booking key) {
 
 /* Cancelar uma pré-reserva */
 void cancelPreRes(typeQueue *queue, Booking key) {
-    if(removeItem2(queue, key)) printf("\n\e[1;32mElemento removido com sucesso!\e[0m\n"); /* Remover a pré-reserva da queue */
+    if(removeItemQueue(queue, key)) printf("\n\e[1;32mElemento removido com sucesso!\e[0m\n"); /* Remover a pré-reserva da queue */
     else printf("\n\e[1;33mElemento não encontrado!\e[0m\n");
     return;
 }
@@ -143,7 +165,7 @@ void listingClient(ptr_list list, typeQueue *queue, int check) {
 void updateServices(typeQueue *queue, ptr_list list, Booking key) {
     ptr_list previous, current;
     if (searchItem(list, key, &previous, &current, 0)) {
-        removeItem1(list, key, 1); /* Remoção de todas as reservas anteriores à data e hora do serviço realizado (inclusivé) */
+        removeItemList(list, key, 1); /* Remoção de todas as reservas anteriores à data e hora do serviço realizado (inclusivé) */
         removePastItems(queue, key);  /* Remoção de todas as pré-reservas anteriores à data e hora do serviço realizado (inclusivé) */
         printf("\n\e[1;32mServiço realizado com sucesso!\e[0m\n");
     } else {
@@ -179,12 +201,15 @@ void loadInfo(char fileName[], ptr_list list, typeQueue *queue) {
     int sizes;
     checkFile(fileName);  /* Verifica o nome do ficheiro dado */
     strcat(prefix, fileName);  /* Concatena o prefixo dado com o nome (já devidamente verificado) e guarda a alteração feita em 'prefix' */
-
+    
+    destroyList(list, 0);
+    destroyQueue(queue, 0);
+    
     if ((fptr = fopen(prefix, "r")) == NULL) {  /* fopen("..\\res_t1.txt", "a") */
         printf("\n>$ Erro a abrir o ficheiro.\n");
         return;
     }
-
+    
     fscanf(fptr, "%d\n", &sizes);  /* Primeira coisa guardada foi o tamanho da lista de reservas, lê-o para saber quantas reservas tem que ler */
     for (int i = 0; i < sizes; ++i) {  /* Lê cada uma das reservas guardadas no ficheiro e insere-as na lista */
         fgets(element.name, 50, fptr);

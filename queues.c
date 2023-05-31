@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 #include "source.h"
 
@@ -18,19 +19,21 @@ int emptyQueue(typeQueue *queue) {
 }
 
 /* A queue é destruída */
-void destroyQueue(typeQueue *queue) {
+void destroyQueue(typeQueue *queue, int check) {
     noQueue *temp_ptr;
     while (!emptyQueue(queue)) {
         temp_ptr = queue->first;
         queue->first = queue->first->next;
         free(temp_ptr);
     }
+    queue->size = 0;
     queue->last = NULL;
+    if (check) free(queue);
     return;
 }
 
 /* Remoção de um elemento em qualquer local da queue */
-int removeItem2(typeQueue *queue, Booking key) {
+int removeItemQueue(typeQueue *queue, Booking key) {
     noQueue *aux1 = queue->first, *aux2 = queue->first;
 
     while (aux1) {  /* Percorre a queue */
@@ -61,7 +64,7 @@ void removePastItems(typeQueue *queue, Booking key) {
     while (current) {
         if ((dateCompare(key.date, current->itemQueue.date) == -1) || ((dateCompare(key.date, current->itemQueue.date) == 0) && (timeCompare(key.time, current->itemQueue.time) <= 0))) {
             aux = current->next;
-            removeItem2(queue, current->itemQueue);
+            removeItemQueue(queue, current->itemQueue);
             current = aux;
         } else {
             current = current->next;
@@ -128,7 +131,7 @@ int toRes(ptr_list list, typeQueue *queue, Booking key) {
     if (emptyQueue(queue))  return 0;  /* Não há pré-reservas */
     
     noQueue *aux = queue->first;
-    char answer;
+    char choice, extra;
     Booking element;
 
     while (aux) {  /* Percorre a fila */
@@ -136,7 +139,7 @@ int toRes(ptr_list list, typeQueue *queue, Booking key) {
             if (insertItemOrder(list, aux->itemQueue)) {  /* Tenta inserir e se inserir com sucesso, pode sair da função, removendo a pré-reserva */
                 printf("\n\e[1;32mPré-reserva com correspondência exata »»\e[0m\n");
                 printData(&aux->itemQueue);
-                removeItem2(queue, aux->itemQueue);
+                removeItemQueue(queue, aux->itemQueue);
                 return 1;
             }
         }
@@ -149,18 +152,27 @@ int toRes(ptr_list list, typeQueue *queue, Booking key) {
         if (dateCompare(aux->itemQueue.date, key.date) != 0 || timeCompare(aux->itemQueue.time, key.time) != 0) {  /* Este processo apenas é feito para as correspondências não exatas */
             printf("\n\e[1;32mPré-reserva prioritária »»\e[0m\n");
             printData(&aux->itemQueue);
+            printf("\n");
             do {  /* Pergunta se quer inserir a pré-reserva em que está atualmente */
-                printf("\nPretende inserir esta pré-reserva nas reservas? ");
-                scanf("%c", &answer);
-                while(getchar() != '\n');  /* Limpeza do buffer */
-            } while (answer != 's' && answer != 'S' && answer != 'n' && answer != 'N');
+                printf("Pretende inserir esta pré-reserva nas reservas? ");
+                choice = getchar();
+                if (choice != '\n') extra = getchar();  /* Auxilia a deteção da inserção de + do que 1 caracter */
+                if (extra != '\n' || choice == '\n') {  /* Se + do que 1 caracter foi inserido (ou nenhum) */
+                    if (choice != '\n') while (getchar() != '\n');  /* Limpeza do buffer */
+                    choice = 'r';  /* Sair do ciclo (reset) */
+                }
+            } while (tolower(choice) != 's' && tolower(choice) != 'n');
 
-            if (answer == 's' || answer == 'S') {  /* Se sim, tenta inseri-la */
+            if (choice == 's' || choice == 'S') {  /* Se sim, tenta inseri-la */
                 element = aux->itemQueue;  /* Copia para um elemento auxiliar e muda a data e hora*/
                 element.date = key.date;
+                if (insertItemOrder(list, element)) {  /* Tenta inserir e se inserir com sucesso, pode sair da função, removendo a pré-reserva */
+                    removeItemQueue(queue, aux->itemQueue);
+                    return 1;
+                }
                 element.time = key.time;
                 if (insertItemOrder(list, element)) {  /* Tenta inserir e se inserir com sucesso, pode sair da função, removendo a pré-reserva */
-                    removeItem2(queue, aux->itemQueue);
+                    removeItemQueue(queue, aux->itemQueue);
                     return 1;
                 }
             }

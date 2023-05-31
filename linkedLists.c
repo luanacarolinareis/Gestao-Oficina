@@ -22,19 +22,20 @@ int emptyList(ptr_list list) {
 }
 
 /* A linked list é destruída */
-ptr_list destroyList(ptr_list list) {
-    ptr_list temp_ptr;
-    while (!emptyList(list)) {
-        temp_ptr = list;
-        list = list->next;
+ptr_list destroyList(ptr_list list, int check) {
+    ptr_list temp_ptr, aux = list->next;
+    while (aux) {
+        temp_ptr = aux;
+        aux = aux->next;
         free(temp_ptr);  /* Libertação da memória alocada */
     }
-    free(list);  /* Libertação da memória alocada */
+    list->next = NULL;
+    if (check) free(list);  /* Libertação da memória alocada */
     return NULL;
 }
 
 /* Remoção de um elemento da linked list */
-int removeItem1(ptr_list list, Booking key, int check) {
+int removeItemList(ptr_list list, Booking key, int check) {
     ptr_list previous, current;  /* Current é um pointer para o elemento a remover */ 
     if (searchItem(list, key, &previous, &current, check)) { /* Procura o item que se quer remover */
         previous->next = current->next;  /* Remoção do elemento */
