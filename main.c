@@ -119,23 +119,8 @@ Booking askData(int check, int *validate) {
     char choice, extra;
     char *input = (char*) malloc (DATE_LENGTH * sizeof(char));
 
-    /* Pedir o nome do cliente */
-    int ctrl;
-    do {
-        ctrl = 0;
-        int i = 0;
-        printf("Nome do cliente: ");
-        scanf("%49[^\n]s", element.name);
-        while (getchar() != '\n');  /* Limpeza do buffer */
-        while (element.name[i] != '\0') {
-            if (!((element.name[i] >= 'a' && element.name[i] <= 'z') || (element.name[i] >= 'A' && element.name[i] <= 'Z') || element.name[i] == ' ')) {
-                ctrl = 1;  /* Inserido caracter não suportado */
-            }
-            if (element.name[i] <= 'Z' && element.name[i] >= 'A') element.name[i] = tolower(element.name[i]);
-            i++;
-        }
-    } while (ctrl == 1);
-
+    checkName(element.name);  /* Pedir o nome do cliente */
+    
     /* Só é necessário pedir o serviço desejado ao tentar reservar */
     if (check == 1) {
         /* Pedir o tipo de serviço desejado (lavagem: 30 minutos || manutenção: 1 hora) */
@@ -215,8 +200,8 @@ struct tm systemTime() {
     current_time = time(NULL);
     local_time = localtime(&current_time);
 
-    local_time->tm_mon = local_time->tm_mon + 1;
-    local_time->tm_year = local_time->tm_year + 1900;
+    local_time->tm_mon = local_time->tm_mon + 1;  /* Meses desde Janeiro - [0, 11] */
+    local_time->tm_year = local_time->tm_year + 1900;  /* Anos desde 1900 */
 
     return *local_time;
 }

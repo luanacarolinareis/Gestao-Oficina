@@ -8,6 +8,33 @@
 
 FILE *fptr;  /* Pointer para o início de um ficheiro */
 
+/* Verifica se o nome inserido é válido */
+void checkName(char *name) {
+    /* Pedir o nome do cliente */
+    int ctrl;
+    do {
+        ctrl = 0;
+        int i = 0;
+        printf("Nome do cliente: ");
+        scanf("%49[^\n]s", name);
+        while (getchar() != '\n');  /* Limpeza do buffer */
+        while (name[i] != '\0') {
+            name[i] = tolower(name[i]);
+            if (!((name[i] >= 'a' && name[i] <= 'z') || 
+                (name[i] == ' ') || 
+                (strchr("ç", name[i]) != NULL) || 
+                (strchr("ã", name[i]) != NULL) || 
+                (strchr("á", name[i]) != NULL) || 
+                (strchr("é", name[i]) != NULL) || 
+                (strchr("í", name[i]) != NULL) || 
+                (strchr("ó", name[i]) != NULL))) {
+                ctrl = 1;  /* Inserido caracter não suportado */
+            }
+            i++;
+        }
+    } while (ctrl == 1);
+}
+
 /* Capitaliza as letras de um nome (NOME PRÓPRIO + APELIDO) */
 void capitalizeWords(char *name) {
     int flag = 1; /* Flag que indica se a próxima letra deve ser capitalizada */
@@ -134,20 +161,7 @@ void listingRes(ptr_list list, typeQueue *queue, int check) {
 void listingClient(ptr_list list, typeQueue *queue, int check) {
     /* Pedir o nome do cliente */
     char name[MAX_LENGTH];
-    int ctrl;
-    do {
-        ctrl = 0;
-        int i = 0;
-        printf("Nome do cliente: ");
-        scanf("%49[^\n]s", name);
-        while(getchar() != '\n');  /* Limpeza do buffer */
-        while (name[i] != '\0') {
-            if ( !((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= 'A' && name[i] <= 'Z') || name[i] == ' ') ) {
-                ctrl = 1;  /* Inserido caracter não suportado */
-            }
-            i++;
-        }
-    } while (ctrl == 1);
+    checkName(name);
 
     int n = 0;
     printf("\n\e[1;32mReservas »»\e[0m\n");

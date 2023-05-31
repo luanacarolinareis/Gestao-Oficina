@@ -19,8 +19,9 @@ typedef struct {
     Time time;
 } Booking;
 
-/* Protótipos de funções relacionadas com o print de reservas e pré-reservas */
+/* Protótipos de funções relacionadas com o print de reservas e pré-reservas (gerais e de cliente) */
 
+void checkName(char *name);  /* Verifica se o nome inserido é válido */
 void capitalizeWords(char *name);  /* Capitaliza as letras de um nome (NOME PRÓPRIO + APELIDO) */
 void printData(Booking *element);  /* Printa os dados de uma reserva ou pré-reserva */
 
