@@ -6,10 +6,10 @@
 /* A linked list é criada */
 ptr_list createList() {
     ptr_list aux;
-    Booking p1 =  {"", 0, {0, 0, 0}, {0, 0}};
+    Booking element =  {"", 0, {0, 0, 0}, {0, 0}};
     aux = (ptr_list) malloc (sizeof(noList));
-    if (aux != NULL) {
-        aux->itemList = p1;
+    if (aux != NULL) {  /* Memória alocada */
+        aux->itemList = element;
         aux->next = NULL;
     }
     return aux;  /* Devolução do pointer da linked list */
@@ -50,7 +50,8 @@ int searchItem(ptr_list list, Booking key, ptr_list *previous, ptr_list *current
     *previous = list;
     *current = list->next;
 
-    while ((*current) != NULL && (dateCompare(key.date, (*current)->itemList.date) == -1) ) {  /* Percorre até data ser igual (ou fim) */
+    /* Percorre até data ser igual (ou fim) */
+    while ((*current) != NULL && (dateCompare(key.date, (*current)->itemList.date) == -1) ) {
         if (check == 1) {  /* Encontrar e remover os elementos (updateServices) */
             (*previous)->next = (*current)->next;  /* Remoção do elemento */
             free(*current); /* Libertação da memória alocada */
@@ -60,31 +61,35 @@ int searchItem(ptr_list list, Booking key, ptr_list *previous, ptr_list *current
             *current = (*current)->next;
         }
     }
-    if ((*current) != NULL && dateCompare(key.date, (*current)->itemList.date) == 1) return 0;
-    while ((*current) != NULL && (dateCompare(key.date, (*current)->itemList.date) == 0) && (timeCompare(key.time, (*current)->itemList.time) == -1) ) {  /* Percorre até hora ser igual e estiver na mesma data (ou fim) */
+
+    if ((*current) != NULL && dateCompare(key.date, (*current)->itemList.date) == 1) return 0;  /* Item não encontrado */
+
+    /* Percorre até hora ser igual e estiver na mesma data (ou fim) */
+    while ((*current) != NULL && (dateCompare(key.date, (*current)->itemList.date) == 0) && (timeCompare(key.time, (*current)->itemList.time) == -1) ) {
         if (check == 1) {  /* Encontrar e remover os elementos (updateServices) */
             (*previous)->next = (*current)->next;  /* Remoção do elemento */
             free(*current); /* Libertação da memória alocada */
             *current = (*previous)->next;
-        } else {
+        } else {  /* Encontrar os elementos */
             *previous = *current;
             *current = (*current)->next;
         }
     }
+
     if ((*current) != NULL && (dateCompare((*current)->itemList.date, key.date) == 0) && (timeCompare((*current)->itemList.time, key.time) == 0) && !strcmp((*current)->itemList.name, key.name)) return 1;  /* Item encontrado */
-    return 0;  /* Não foi encontrado um item igual */
+    return 0;  /* Item não encontrado */
 }
 
 /* Procura e imprime todas as reservas de um cliente (por recursividade) */
 void searchClient(ptr_list list, char *name, int *n) {
     ptr_list aux = list->next;  /* Salta o header */
-    if (aux == NULL) return;
+    if (aux == NULL) return;  /* Recua para a chamada anterior (para a comparação de nomes) */
     searchClient(aux, name, n);
     if (!strcmp(name, aux->itemList.name)) {  /* Devolve 0 quando igual (strcmp) */
         printData(&(aux->itemList));
-        (*n)++;
+        (*n)++;  /* Número de reservas de um cliente */
     }
-    return;
+    return;  /* Recua para a chamada anterior (para a comparação de nomes) */
 }
 
 /* Printar a linked list */
@@ -100,100 +105,66 @@ void printList(ptr_list list) {
 /* Insere a nova reserva, por ordem, e devolve um inteiro que diz se foi ou não possível inserir */
 int insertItemOrder(ptr_list list, Booking element) {
     ptr_list new = (ptr_list) malloc (sizeof(noList));  /* Alocação de memória para o novo nó */
-    ptr_list current, last;
+    ptr_list previous, current;
 
     if (new == NULL) {
-        printf("Memory not allocated.\n");
+        printf("Memória não alocada.\n");
         exit(1);
     } 
     new->itemList = element;  /* Inicializa os dados do novo nó */
     new->next = NULL;
 
-    if (list->next == NULL) {  /* Se a lista está vazia, então este é o primeiro nó */
+    if (emptyList(list)) {  /* Se a lista está vazia, então este é o primeiro nó */
         list->next = new;
-        return 1;
+        return 1;  /* Elemento inserido */
     }
     current = list->next;
-    last = list;
+    previous = list;
 
-    while (current != NULL && (dateCompare(new->itemList.date,current->itemList.date) == -1)) {  /* Procura a posição de inserção */
-        last = current;
+    /* Procura a posição de inserção */
+    while (current != NULL && (dateCompare(new->itemList.date, current->itemList.date) == -1)) {
+        previous = current;
         current = current->next;
     }
-    while (current != NULL && (timeCompare(new->itemList.time,current->itemList.time) == -1) && (dateCompare(new->itemList.date,current->itemList.date) == 0)) {  /* Procura a posição de inserção */
-        last = current;
+    while (current != NULL && (timeCompare(new->itemList.time, current->itemList.time) == -1) && (dateCompare(new->itemList.date,current->itemList.date) == 0)) {
+        previous = current;
         current = current->next;
     }
-    if (last == list) {  /* Se o ponteiro para o elemento last for a cabeça da lista, insere no princípio */
-        /* Verificar se tem espaço para inserir */
 
-        /* Se a data do seguinte (se houver) é igual à nova */
-        /* E o fim do novo não é compatível com o início do seguinte */
-        if (current != NULL && (dateCompare(current->itemList.date,new->itemList.date) == 0) && !timeCompatibility(current->itemList.time, new->itemList.time, new->itemList.service * 30)) {  
-            free(new);
+    if (previous == list) {  /* Se o pointer para o elemento previous for a cabeça da lista, insere no início */
+        /* Verificar se tem espaço para inserir (no início)*/
+
+        /* 1) Se a data do seguinte (se houver) é igual à nova */
+        /* 2) E o fim do novo não é compatível com o início do seguinte */
+        if (current != NULL && (dateCompare(current->itemList.date, new->itemList.date) == 0) && !timeCompatibility(current->itemList.time, new->itemList.time, new->itemList.service * 30)) {  
+            free(new);  /* Libertação da memória alocada */
             return 0;
         }
         list->next = new;
     } else {
-        /* Verificar se tem espaço para inserir */
+        /* Verificar se tem espaço para inserir (no meio ou no fim) */
 
-        /* Se a data do anterior é igual à nova */
-        /* E o fim do anterior não é compatível com o início do novo */
-        if ((dateCompare(new->itemList.date,last->itemList.date) == 0) && !timeCompatibility(new->itemList.time, last->itemList.time, last->itemList.service * 30)) {
-            free(new);
+        /* 1) Se a data do anterior é igual à nova */
+        /* 2) E o fim do anterior não é compatível com o início do novo */
+        if ((dateCompare(new->itemList.date, previous->itemList.date) == 0) && !timeCompatibility(new->itemList.time, previous->itemList.time, previous->itemList.service * 30)) {
+            free(new);  /* Libertação da memória alocada */
             return 0;
         }
-
-        /* Se a data do seguinte (se houver) é igual à nova */
-        /* E o fim do novo não é compatível com o inicio do seguinte */
-        if (current != NULL && (dateCompare(current->itemList.date,new->itemList.date) == 0) && !timeCompatibility(current->itemList.time, new->itemList.time, new->itemList.service * 30)) {
-            free(new);
+        /* 1) Se a data do seguinte (se houver) é igual à nova */
+        /* 2) E o fim do novo não é compatível com o início do seguinte */
+        if (current != NULL && (dateCompare(current->itemList.date, new->itemList.date) == 0) && !timeCompatibility(current->itemList.time, new->itemList.time, new->itemList.service * 30)) {
+            free(new);  /* Libertação da memória alocada */
             return 0;
         }
-        last->next = new;  /* Caso contrário, insere entre dois nós */
+        previous->next = new;  /* Caso contrário, insere entre dois nós */
     }
-    new->next = current; /* Em qualquer dos casos, atualiza o ponteiro */
-    return 1;
+    new->next = current; /* Em qualquer dos casos, atualiza o pointer */
+    return 1;  /* Elemento inserido */
 }
-
-/* Listar as reservas disponíveis num determinado dia */
-int printAvailableTime(ptr_list list, Date *date) {
-    ptr_list aux = list->next;  /* Salta o header */
-    Time ini = {8, 0}, end = {18, 0};  /* 'ini' começa com o horário de início de funcionamento da oficina, 'end' tem o horário de fim */
-    int check = 0, count = 0;  /* 'count' verifica se houve algum horário disponível */
-
-    while (aux) {  /* Percorre a linked list */
-        if (dateCompare(aux->itemList.date,*date) == 0) {  /* Ao encontrar uma reserva com a data igual à dada */
-            if (timeCompare(aux->itemList.time, ini) == 0)  /* Se a reserva tiver tempo de início igual ao 'ini' atual */
-                check = 1;  /* Não será printada, ou seja, vai ser saltado o intervalo de tempo dessa reserva */
-            
-            if (!check) {  /* Se for uma reserva com tempo de início depois do guardado em 'ini', vai ser printado o intervalo entre 'ini' e o início da reserva */
-                printf("%d:%d -- %d:%d\n", ini.hour, ini.minutes, aux->itemList.time.hour, aux->itemList.time.minutes);
-                count = 1;
-            }
-            check=0;
-
-            /* 'ini' vai agora ser o tempo de fim da reserva atual */
-            ini.hour = aux->itemList.time.hour;
-            ini.minutes = aux->itemList.time.minutes + 30 * aux->itemList.service;
-
-            timeFix(&ini);  /* Correção dos minutos e das horas de 'ini' */
-        }
-        if (dateCompare(aux->itemList.date, *date) == -1) /* Reserva com data superior, vai parar imediatamente de percorrer */
-            break;
-        aux = aux->next;
-    }
-    if (timeCompare(ini, end) != 0) {  /* Se o tempo de fim da última reserva daquele dia não for 18:00, é printado o último intervalo de tempo, desde 'ini' até às 18:00 */
-        printf("%d:%d -- 18:00\n", ini.hour, ini.minutes);
-        count = 1;
-    }
-    return count;
-}
-
 
 /* Devolve o tamanho da linked list */
 int getListSize(ptr_list list) {
-    ptr_list aux = list->next;
+    ptr_list aux = list->next;  /* Salta o header */
     int count = 0;
     while (aux) {
         count++;

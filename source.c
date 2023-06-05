@@ -19,7 +19,7 @@ void checkName(char *name) {
         scanf("%49[^\n]s", name);
         while (getchar() != '\n');  /* Limpeza do buffer */
         while (name[i] != '\0') {
-            name[i] = tolower(name[i]);
+            name[i] = tolower(name[i]);  /* O nome é convertido para letras minúsculas */
             if (!((name[i] >= 'a' && name[i] <= 'z') || 
                 (name[i] == ' ') || 
                 (strchr("á", name[i]) != NULL) || 
@@ -36,6 +36,7 @@ void checkName(char *name) {
             i++;
         }
     } while (ctrl == 1);
+    return;
 }
 
 /* Capitaliza as letras de um nome (NOME PRÓPRIO + APELIDO) */
@@ -43,12 +44,13 @@ void capitalizeWords(char *name) {
     int flag = 1; /* Flag que indica se a próxima letra deve ser capitalizada */
     for (int i = 0; name[i] != '\0'; i++) {
         if (flag && name[i] != ' ') {
-            name[i] = toupper(name[i]); // Converte a letra atual em maiúscula
+            name[i] = toupper(name[i]); /* Converte a letra atual em maiúscula */
             flag = 0;
         } else if (name[i] == ' ') {
-            flag = 1; // Define a flag para capitalizar a próxima letra após um espaço
+            flag = 1; /* Define a flag para capitalizar a próxima letra, após um espaço */
         }
     }
+    return;
 }
 
 /* Printa os dados de uma reserva ou pré-reserva */
@@ -68,8 +70,9 @@ int dateCompare(Date first, Date second) {
     int firstForm, secondForm;
     firstForm = first.year * 10000 + first.month * 100 + first.day;  /* Formatação yyyymmdd */
     secondForm = second.year * 10000 + second.month * 100 + second.day;
-    if (firstForm == secondForm) return 0;  /* Se as datas forem iguais devolve 0 */
+
     if (firstForm > secondForm) return -1;  /* Se o segundo for menor devolve -1 */
+    if (firstForm == secondForm) return 0;  /* Se as datas forem iguais devolve 0 */
     return 1;  /* Se o segundo for maior devolve 1 */
 }
 
@@ -78,6 +81,7 @@ int timeCompatibility(Time first, Time second, int duration) {
     int firstMin, secondMin;
     firstMin = first.hour * 60 + first.minutes;
     secondMin = second.hour * 60 + second.minutes + duration;
+
     if (firstMin >= secondMin) return 1;  /* Devolve 1 se a hora de fim da anterior é compativel com a seguinte */
     return 0;
 }
@@ -87,15 +91,16 @@ int timeCompare(Time first, Time second){
     int firstMin, secondMin;
     firstMin = first.hour * 60 + first.minutes;
     secondMin = second.hour * 60 + second.minutes;
-    if (firstMin == secondMin) return 0;  /* Se os horários forem iguais devolve 0 */
+
     if (firstMin > secondMin) return -1;  /* Se o segundo for menor devolve -1 */
+    if (firstMin == secondMin) return 0;  /* Se os horários forem iguais devolve 0 */
     return 1;  /* Se o segundo for maior devolve 1 */
 }
 
 /* Corrige o horário */
-void timeFix(Time *element) {
-    element->hour += element->minutes / 60;  /* Adiciona às horas o equivalente em minutos */
-    element->minutes -= 60 * (element->minutes / 60);  /* Retira o excesso dos minutos */
+void timeFix(Time *time) {
+    time->hour += time->minutes / 60;  /* Adiciona às horas o equivalente em minutos */
+    time->minutes -= 60 * (time->minutes / 60);  /* Retira o excesso dos minutos */
 }
 
 /* Reservar um serviço */
@@ -138,7 +143,7 @@ void preReserve(Booking element, typeQueue *queue) {
 /* Cancelar uma reserva */
 void cancelRes(ptr_list list, typeQueue *queue, Booking key) {
     if(removeItemList(list, key, 0)) {
-        printf("\n\e[1;32mElemento removido com sucesso!\e[0m\n"); /* Remover a pré-reserva da queue */
+        printf("\n\e[1;32mElemento removido com sucesso!\e[0m\n"); /* Reserva removida da linked list */
         if(toRes(list, queue, key)) printf("\n\e[1;32mElemento movido para reserva com sucesso!\e[0m\n");  /* Tenta inserir uma pré-reserva no lugar da reserva cancelada */
         else printf("Não foi movido nenhum elemento para reserva.\n");
     }
@@ -148,7 +153,7 @@ void cancelRes(ptr_list list, typeQueue *queue, Booking key) {
 
 /* Cancelar uma pré-reserva */
 void cancelPreRes(typeQueue *queue, Booking key) {
-    if(removeItemQueue(queue, key)) printf("\n\e[1;32mElemento removido com sucesso!\e[0m\n"); /* Remover a pré-reserva da queue */
+    if(removeItemQueue(queue, key)) printf("\n\e[1;32mElemento removido com sucesso!\e[0m\n"); /* Pré-reserva removida da queue */
     else printf("\n\e[1;33mElemento não encontrado!\e[0m\n");
     return;
 }
@@ -185,7 +190,7 @@ void listingClient(ptr_list list, typeQueue *queue, int check) {
 }
 
 /* Dar update aos serviços já realizados (realizar uma lavagem ou manutenção) */
-void updateServices(typeQueue *queue, ptr_list list, Booking key) {
+void updateServices(ptr_list list, typeQueue *queue, Booking key) {
     ptr_list previous, current;
     if (searchItem(list, key, &previous, &current, 0)) {
         removeItemList(list, key, 1); /* Remoção de todas as reservas anteriores à data e hora do serviço realizado (inclusivé) */
@@ -197,9 +202,47 @@ void updateServices(typeQueue *queue, ptr_list list, Booking key) {
     return;
 }
 
+/* Listar as reservas disponíveis num determinado dia */
+int printAvailableTime(ptr_list list, Date *date) {
+    ptr_list aux = list->next;  /* Salta o header */
+    Time ini = {8, 0}, end = {18, 0};  /* 'ini' começa com o horário de início de funcionamento da oficina, 'end' tem o horário de fim */
+    int check = 0, count = 0;  /* 'count' verifica se houve algum horário disponível */
+
+    while (aux) {  /* Percorre a linked list */
+        if (dateCompare(aux->itemList.date, *date) == 0) {  /* Ao encontrar uma reserva com a data igual à dada */
+            
+            if (timeCompare(aux->itemList.time, ini) == 0)  /* Se a reserva tiver tempo de início igual ao 'ini' atual */
+                check = 1;  /* Não será printada, ou seja, vai ser saltado o intervalo de tempo dessa reserva */
+
+            if (!check) {  /* Se for uma reserva com tempo de início depois do guardado em 'ini', vai ser printado o intervalo entre 'ini' e o início da reserva */
+                printf("%02d:%02d -- %02d:%02d\n", ini.hour, ini.minutes, aux->itemList.time.hour, aux->itemList.time.minutes);
+                count = 1;
+            }
+            check = 0;
+
+            /* 'ini' vai agora ser o tempo de fim da reserva atual */
+            ini.hour = aux->itemList.time.hour;
+            ini.minutes = aux->itemList.time.minutes + 30 * aux->itemList.service;
+
+            timeFix(&ini);  /* Correção dos minutos e das horas de 'ini' */
+        }
+        if (dateCompare(aux->itemList.date, *date) == -1) /* Reserva com data superior, vai parar imediatamente de percorrer */
+            break;
+        aux = aux->next;
+    }
+
+    if (timeCompare(ini, end) != 0) {  /* Se o tempo de fim da última reserva daquele dia não for 18:00, é printado o último intervalo de tempo, desde 'ini' até às 18:00 */
+        printf("%02d:%02d -- 18:00\n", ini.hour, ini.minutes);
+        count = 1;
+    }
+    return count;
+}
+
 /* Verificar o início do nome de um ficheiro */
 void checkFile(char fileName[]) {
     int i = strcspn(fileName, "\0");  /* Devolve o último índice */
+
+    /* Adição do sufixo '.txt' ao nome, caso não seja colocado */
     if (fileName[i - 4] != '.' || fileName[i - 3] != 't' || fileName[i - 2] != 'x' || fileName[i - 1] != 't') {
         fileName[i] = '.'; fileName[i + 1] = 't'; fileName[i + 2] = 'x'; fileName[i + 3] = 't'; fileName[i + 4] = '\0';
     }
@@ -214,7 +257,7 @@ void checkFile(char fileName[]) {
             char *p = fileName + 4;
             char *temp = fileName;  /* Usada para armazenar o valor de *p antes de incrementar p */
             while (*p != '\0') {
-                *temp++ = *p++;  /* Copia cada caracter da posição atual de p para a posição atual de temp e avança ambos os ponteiros para a próxima posição */
+                *temp++ = *p++;  /* Copia cada caracter da posição atual de p para a posição atual de temp e avança ambos os pointers para a próxima posição */
             }
             *temp = '\0';
         }
@@ -222,32 +265,32 @@ void checkFile(char fileName[]) {
     return;
 }
 
-/* Carregar a informação de um ficheiro .txt */
+/* Carregar a informação de um ficheiro '.txt' */
 void loadInfo(char fileName[], ptr_list list, typeQueue *queue) {
-    char prefix[50] = "data/res_";  /* Armazena um dos prefixos de ficheiro definidos */
+    char prefix[MAX_LENGTH] = "data/res_";  /* Armazena um dos prefixos de ficheiro definidos */
     Booking element;
     int sizes;
+    
     checkFile(fileName);  /* Verifica o nome do ficheiro dado */
     strcat(prefix, fileName);  /* Concatena o prefixo dado com o nome (já devidamente verificado) e guarda a alteração feita em 'prefix' */
-    
+
     destroyList(list, 0);
     destroyQueue(queue, 0);
     
-    if ((fptr = fopen(prefix, "r")) == NULL) {  /* fopen("..\\res_t1.txt", "a") */
+    if ((fptr = fopen(prefix, "r")) == NULL) {
         printf("\n>$ Erro a abrir o ficheiro.\n");
         return;
     }
-    
-    fscanf(fptr, "%d\n", &sizes);  /* Primeira coisa guardada foi o tamanho da lista de reservas, lê-o para saber quantas reservas tem que ler */
-    for (int i = 0; i < sizes; ++i) {  /* Lê cada uma das reservas guardadas no ficheiro e insere-as na lista */
+    fscanf(fptr, "%d\n", &sizes);  /* A primeira coisa a ser guardada foi o tamanho da lista de reservas. Este é lido para saber quantas reservas tem que ler */
+
+    for (int i = 0; i < sizes; i++) {  /* Lê cada uma das reservas guardadas no ficheiro e insere-as na linked list */
         fgets(element.name, 50, fptr);
-        element.name[strcspn(element.name, "\n")] = 0;  /* fgets guarda na string o char \n, tem que ser removido */
+        element.name[strcspn(element.name, "\n")] = 0;  /* fgets() guarda na string o char '\n', pelo que tem de ser removido */
         fscanf(fptr, "%d\n", &element.service);
         fscanf(fptr, "%d/%d/%d\n", &element.date.day, &element.date.month, &element.date.year);
         fscanf(fptr, "%d:%d\n\n", &element.time.hour, &element.time.minutes);
-        insertItemOrder(list, element);
+        insertItemOrder(list, element);  /* Insere o elemento lido na linked list */
     }
-
     fclose(fptr);
 
     /* Mudança do prefixo */
@@ -255,26 +298,27 @@ void loadInfo(char fileName[], ptr_list list, typeQueue *queue) {
     prefix[6]='r';
     prefix[7]='e';
 
-    if ((fptr = fopen(prefix, "r")) == NULL) {  /* fopen("..\\pre_t1.txt", "a") */
+    if ((fptr = fopen(prefix, "r")) == NULL) {
         printf("\n>$ Erro a abrir o ficheiro.\n");
         return;
     }
+    fscanf(fptr, "%d\n", &sizes);  /* A primeira coisa a ser guardada foi o tamanho da fila de pré-reservas. Este é lido para saber quantas pré-reservas tem que ler */
 
-    fscanf(fptr, "%d\n", &sizes);  /* Primeira coisa guardada foi o tamanho da fila de pré-reservas, lê-o para saber quantas pré-reservas tem que ler */
-    for (int i = 0; i < sizes; ++i) {  /* Lê cada uma das pré-reservas guardadas no ficheiro e insere-as na fila */
+    for (int i = 0; i < sizes; i++) {  /* Lê cada uma das pré-reservas guardadas no ficheiro e insere-as na queue */
         fgets(element.name, 50, fptr);
-        element.name[strcspn(element.name, "\n")] = 0;  /* fgets guarda na string o char \n, tem que ser removido */
+        element.name[strcspn(element.name, "\n")] = 0;  /* fgets guarda na string o char '\n', pelo que tem de ser removido */
         fscanf(fptr, "%d\n", &element.service);
         fscanf(fptr, "%d/%d/%d\n", &element.date.day, &element.date.month, &element.date.year);
         fscanf(fptr, "%d:%d\n\n", &element.time.hour, &element.time.minutes);
-        addItem(queue, element);
+        addItem(queue, element);  /* Insere o elemento lido na queue */
     }
     fclose(fptr);
+
     printf("\n\e[1;32m>$ Informação carregada com sucesso!\e[0m\n");
     return;
 }
 
-/* Gravar o estado atual das reservas num ficheiro .txt */
+/* Gravar o estado atual das reservas num ficheiro '.txt' */
 void saveInfo(char fileName[], ptr_list list, typeQueue *queue) {
     char prefix[50] = "data/res_";  /* Armazena um dos prefixos de ficheiro definidos */
     ptr_list aux_list = list->next;  /* Salta o header */
@@ -283,19 +327,18 @@ void saveInfo(char fileName[], ptr_list list, typeQueue *queue) {
     checkFile(fileName);  /* Verifica o nome do ficheiro dado */
     strcat(prefix, fileName);  /* Concatena o prefixo dado com o nome (já devidamente verificado) e guarda a alteração feita em 'prefix' */
     
-    if ((fptr = fopen(prefix, "w")) == NULL) {  /* fopen("..\\res_t1.txt", "a") */
+    if ((fptr = fopen(prefix, "w")) == NULL) {
         printf("\n>$ Erro a abrir o ficheiro.\n");
         return;
     }
+    fprintf(fptr, "%d\n", getListSize(list));
 
-    fprintf(fptr,"%d\n",getListSize(list));
     while (aux_list) {
         fprintf(fptr, "%s\n%d\n", aux_list->itemList.name, aux_list->itemList.service);
         fprintf(fptr, "%d/%d/%d\n", aux_list->itemList.date.day, aux_list->itemList.date.month, aux_list->itemList.date.year);
         fprintf(fptr, "%d:%d\n\n", aux_list->itemList.time.hour, aux_list->itemList.time.minutes);
         aux_list = aux_list->next;
     }
-
     fclose(fptr);
 
     /* Mudança do prefixo */
@@ -303,12 +346,12 @@ void saveInfo(char fileName[], ptr_list list, typeQueue *queue) {
     prefix[6]='r';
     prefix[7]='e';
 
-    if ((fptr = fopen(prefix, "w")) == NULL) {  /* fopen("..\\pre_t1.txt", "a") */
+    if ((fptr = fopen(prefix, "w")) == NULL) {
         printf("\n>$ Erro a abrir o ficheiro.\n");
         return;
     }
+    fprintf(fptr, "%d\n", queue->size);
 
-    fprintf(fptr,"%d\n",queue->size);
     while (aux_queue) {
         fprintf(fptr, "%s\n%d\n", aux_queue->itemQueue.name, aux_queue->itemQueue.service);
         fprintf(fptr, "%d/%d/%d\n", aux_queue->itemQueue.date.day, aux_queue->itemQueue.date.month, aux_queue->itemQueue.date.year);
@@ -316,6 +359,7 @@ void saveInfo(char fileName[], ptr_list list, typeQueue *queue) {
         aux_queue = aux_queue->next;
     }
     fclose(fptr);
+    
     printf("\n\e[1;32m>$ Informação gravada com sucesso!\e[0m\n");
     return;
 }

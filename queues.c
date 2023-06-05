@@ -24,35 +24,36 @@ void destroyQueue(typeQueue *queue, int check) {
     while (!emptyQueue(queue)) {
         temp_ptr = queue->first;
         queue->first = queue->first->next;
-        free(temp_ptr);
+        free(temp_ptr);  /* Libertação da memória alocada */
     }
     queue->size = 0;
     queue->last = NULL;
-    if (check) free(queue);
+    if (check) free(queue);  /* Libertação da memória alocada */
     return;
 }
 
 /* Remoção de um elemento em qualquer local da queue */
 int removeItemQueue(typeQueue *queue, Booking key) {
-    noQueue *aux1 = queue->first, *aux2 = queue->first;
+    noQueue *current = queue->first, *previous = queue->first;
 
-    while (aux1) {  /* Percorre a queue */
-        /* Verificação da igualdade das datas e verificação da igualdade dos horários */
-        if ((dateCompare(aux1->itemQueue.date, key.date) == 0 && timeCompare(aux1->itemQueue.time, key.time) == 0 && !strcmp(aux1->itemQueue.name, key.name))) {
+    while (current) {  /* Percorre a queue */
+        /* Verificação da igualdade das datas, dos horários e dos nomes */
+        if ((dateCompare(current->itemQueue.date, key.date) == 0 && timeCompare(current->itemQueue.time, key.time) == 0 && !strcmp(current->itemQueue.name, key.name))) {
             /* Remoção da pré-reserva da queue*/
-            if (aux1 == aux2) {
-                queue->first = aux1->next;
-                if (!aux1->next) queue->last = aux1;
+            if (current == previous) {  /* Remoção do 1º elemento da queue */
+                queue->first = current->next;
+                if (current->next == NULL) queue->last = current;
             } else {
-                aux2->next = aux1->next;                
-                if (!aux2->next) queue->last = aux2;
+                previous->next = current->next;                
+                if (previous->next == NULL) queue->last = previous;
             } 
-            free(aux1);
+            free(current);  /* Libertação da memória alocada */
             (queue->size)--;
             return 1;         
         }
-        if (aux2 != aux1) aux2 = aux2->next;
-        aux1 = aux1->next;
+        /* Ainda não foi encontrado o elemento a remover */
+        if (previous != current) previous = previous->next;
+        current = current->next;
     }
     return 0;
 }
@@ -64,7 +65,7 @@ void removePastItems(typeQueue *queue, Booking key) {
     while (current) {
         if ((dateCompare(key.date, current->itemQueue.date) == -1) || ((dateCompare(key.date, current->itemQueue.date) == 0) && (timeCompare(key.time, current->itemQueue.time) <= 0))) {
             aux = current->next;
-            removeItemQueue(queue, current->itemQueue);
+            removeItemQueue(queue, current->itemQueue);  /* Chamada da função de remoção */
             current = aux;
         } else {
             current = current->next;
@@ -77,10 +78,12 @@ void removePastItems(typeQueue *queue, Booking key) {
 void addItem(typeQueue *queue, Booking element) {
     noQueue *temp_ptr;
     temp_ptr = (noQueue*) malloc (sizeof(noQueue));
-    if (temp_ptr != NULL) {
+
+    if (temp_ptr != NULL) {  /* Memória alocada */
         temp_ptr->itemQueue = element;
         temp_ptr->next = NULL;
         (queue->size)++;
+
         if (emptyQueue(queue)) queue->first = temp_ptr;
         else queue->last->next = temp_ptr;
 
@@ -102,8 +105,9 @@ int comparator(const void *first, const void *second) {
 void printQueue(typeQueue *queue, char *name, int *n, int check) {
     noQueue *aux = queue->first;
     noQueue **sortPtr = (noQueue**) malloc (sizeof(noQueue*) * queue->size);
+    int i;
 
-    for (int i = 0; i < queue->size; i++) {
+    for (i = 0; i < queue->size; i++) {
         sortPtr[i] = aux;  /* Cada elemento da array é um pointer para cada um dos elementos da queue */
         aux = aux->next;
     }
@@ -111,40 +115,41 @@ void printQueue(typeQueue *queue, char *name, int *n, int check) {
     qsort(sortPtr, queue->size, sizeof(noQueue*), comparator);  /* Organiza os pointers da array por ordem, com base na função de comparação "comparator" */
 
     if (check == 6) {  /* Selecionada a opção de listar todas */
-        for (int i = 0; i < queue->size; i++) {
+        for (i = 0; i < queue->size; i++) {  /* Da + antiga para a + recente */
             printData(&(sortPtr[i]->itemQueue));
         }
     } else {  /* Selecionada a opção de listar as de um cliente específico */
-        for (int i = queue->size - 1; i >= 0; i--) {
+        for (i = queue->size - 1; i >= 0; i--) {  /* Da + recente para a + antiga */
             if (!strcmp(name, sortPtr[i]->itemQueue.name)) {
                 printData(&(sortPtr[i]->itemQueue));
                 (*n)++;
             }
         }
     }
-    free(sortPtr);
+    free(sortPtr);  /* Libertação da memória alocada */
     return;
 }
 
-/* Quando uma reserva é cancelada, envia uma pré-reserva das queues para as linked lists (passa a reserva) */
+/* Quando uma reserva é cancelada, envia uma pré-reserva da queue para a linked list (passa a reserva) */
 int toRes(ptr_list list, typeQueue *queue, Booking key) {
     if (emptyQueue(queue))  return 0;  /* Não há pré-reservas */
     
-    noQueue *aux = queue->first;
     char choice, extra;
+    noQueue *aux = queue->first;
     Booking element;
 
-    while (aux) {  /* Percorre a fila */
-        if (dateCompare(aux->itemQueue.date, key.date) == 0 && timeCompare(aux->itemQueue.time, key.time) == 0) {  /* Se for uma correspondência exata */
-            if (insertItemOrder(list, aux->itemQueue)) {  /* Tenta inserir e se inserir com sucesso, pode sair da função, removendo a pré-reserva */
+    while (aux) {  /* Percorre a queue */
+        if (dateCompare(aux->itemQueue.date, key.date) == 0 && timeCompare(aux->itemQueue.time, key.time) == 0) {  /* Se for uma correspondência exata de data e hora */
+            if (insertItemOrder(list, aux->itemQueue)) {  /* Tenta inserir e, se inserir com sucesso, pode sair da função, removendo a pré-reserva */
                 printf("\n\e[1;32mPré-reserva com correspondência exata »»\e[0m\n");
                 printData(&aux->itemQueue);
-                removeItemQueue(queue, aux->itemQueue);
+                removeItemQueue(queue, aux->itemQueue);  /* Remoção do elemento da queue, após adição na linked list */
                 return 1;
             }
         }
         aux = aux->next;
     }
+    /* Não foi encontrada nenhuma correspondência exata (primeiro da queue tem prioridade) */
     aux = queue->first;
     printf("Não há nenhuma correspondência exata com o horário cancelado ou não foi possível inseri-la.\n");
 
@@ -164,20 +169,20 @@ int toRes(ptr_list list, typeQueue *queue, Booking key) {
             } while (tolower(choice) != 's' && tolower(choice) != 'n');
 
             if (choice == 's' || choice == 'S') {  /* Se sim, tenta inseri-la */
-                element = aux->itemQueue;  /* Copia para um elemento auxiliar e muda a data e hora*/
+                element = aux->itemQueue;  /* Copia para um elemento auxiliar */
                 
-                if (insertItemOrder(list, element)) {  /* Tenta inserir e se inserir com sucesso, pode sair da função, removendo a pré-reserva */
-                    removeItemQueue(queue, aux->itemQueue);
+                if (insertItemOrder(list, element)) {  /* Tenta inserir e, se inserir com sucesso, pode sair da função, removendo a pré-reserva */
+                    removeItemQueue(queue, aux->itemQueue);  /* Remoção do elemento da queue, após adição na linked list */
                     return 1;
                 }
                 element.date = key.date;  /* Altera a data */
-                if (insertItemOrder(list, element)) {  /* Tenta inserir e se inserir com sucesso, pode sair da função, removendo a pré-reserva */
-                    removeItemQueue(queue, aux->itemQueue);
+                if (insertItemOrder(list, element)) {  /* Tenta inserir e, se inserir com sucesso, pode sair da função, removendo a pré-reserva */
+                    removeItemQueue(queue, aux->itemQueue);  /* Remoção do elemento da queue, após adição na linked list */
                     return 1;
                 }
                 element.time = key.time;  /* Altera o horário */
-                if (insertItemOrder(list, element)) {  /* Tenta inserir e se inserir com sucesso, pode sair da função, removendo a pré-reserva */
-                    removeItemQueue(queue, aux->itemQueue);
+                if (insertItemOrder(list, element)) {  /* Tenta inserir e, se inserir com sucesso, pode sair da função, removendo a pré-reserva */
+                    removeItemQueue(queue, aux->itemQueue);  /* Remoção do elemento da queue, após adição na linked list */
                     return 1;
                 }
             }

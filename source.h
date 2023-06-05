@@ -30,7 +30,7 @@ void printData(Booking *element);  /* Printa os dados de uma reserva ou pré-res
 int dateCompare(Date first, Date second);  /* Compara duas datas */
 int timeCompatibility(Time first, Time second, int duration);  /* Verifica se o tempo de fim de uma reserva é compatível com o início de outra */
 int timeCompare(Time first, Time second);  /* Compara dois horários */
-void timeFix(Time *element);  /* Corrige o horário */
+void timeFix(Time *time);  /* Corrige o horário */
 
 // -----------------------------------------------------------------------------------------------------
 
@@ -49,10 +49,9 @@ int emptyList(ptr_list list);  /* Verifica se a linked list está vazia */
 ptr_list destroyList(ptr_list list, int check);  /* A linked list é destruída */
 int removeItemList(ptr_list list, Booking key, int check);  /* Remoção de um elemento da linked list */
 int searchItem(ptr_list list, Booking key, ptr_list *previous, ptr_list *current, int check);  /* Procurar um item na linked list (encontrar uma reserva no mesmo dia e horário) */
-void searchClient(ptr_list list, char *name, int *n);  /* Procura e imprime todas as reservas de um cliente (por recursividade)*/
+void searchClient(ptr_list list, char *name, int *n);  /* Procura e imprime todas as reservas de um cliente (por recursividade) */
 void printList(ptr_list list);  /* Printar a linked list */
 int insertItemOrder(ptr_list list, Booking element);  /* Insere a nova reserva, por ordem, e retorna um inteiro que diz se foi ou não possível inserir */
-int printAvailableTime(ptr_list list, Date *date);  /* Listar as reservas disponíveis num determinado dia */
 int getListSize(ptr_list list);  /* Devolve o tamanho da linked list */
 
 // -----------------------------------------------------------------------------------------------------
@@ -79,7 +78,7 @@ void removePastItems(typeQueue *queue, Booking key);  /* Remoção de todos os e
 void addItem(typeQueue *queue, Booking element);  /* Adição de um elemento ao final da queue */
 int comparator(const void *first, const void *second); /* Devolve inteiro positivo, negativo ou nulo, conforme o primeiro argumento é posterior, anterior ou igual ao segundo */
 void printQueue(typeQueue *queue, char *name, int *n, int check);  /* Printa todas as pré-reservas ou as pré-reservas de um cliente */
-int toRes(ptr_list list, typeQueue *queue, Booking key); /* Quando uma reserva é cancelada, envia uma pré-reserva das queues para as linked lists (passa a reserva) */
+int toRes(ptr_list list, typeQueue *queue, Booking key); /* Quando uma reserva é cancelada, envia uma pré-reserva da queue para a linked list (passa a reserva) */
 
 // -----------------------------------------------------------------------------------------------------
 
@@ -91,12 +90,13 @@ void cancelRes(ptr_list list, typeQueue *queue, Booking key);  /* Cancelar uma r
 void cancelPreRes(typeQueue *queue, Booking key);  /* Cancelar uma pré-reserva */
 void listingRes(ptr_list list, typeQueue *queue, int check);  /* Listar todas as reservas e pré-reservas (+ antigas primeiro) */
 void listingClient(ptr_list list, typeQueue *queue, int check);  /* Listar as reservas e pré-reservas de um cliente (+ recentes primeiro) */
-void updateServices(typeQueue *queue, ptr_list list, Booking key);  /* Dar update aos serviços já realizados (realizar uma lavagem ou manutenção) */
+void updateServices(ptr_list list, typeQueue *queue, Booking key);  /* Dar update aos serviços já realizados (realizar uma lavagem ou manutenção) */
+int printAvailableTime(ptr_list list, Date *date);  /* Listar as reservas disponíveis num determinado dia */
 
 /* Protótipos de funções relacionadas com o armazenamento e carregamento de dados */
 
 void checkFile(char fileName[]);  /* Verificar o início do nome de um ficheiro */
-void loadInfo(char fileName[], ptr_list list, typeQueue *queue);  /* Carregar a informação de um ficheiro .txt */
-void saveInfo(char fileName[], ptr_list list, typeQueue *queue);  /* Gravar o estado atual das reservas num ficheiro .txt */
+void loadInfo(char fileName[], ptr_list list, typeQueue *queue);  /* Carregar a informação de um ficheiro '.txt' */
+void saveInfo(char fileName[], ptr_list list, typeQueue *queue);  /* Gravar o estado atual das reservas num ficheiro '.txt' */
 
 #endif // SOURCE_H
