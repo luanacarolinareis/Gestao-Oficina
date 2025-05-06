@@ -101,7 +101,7 @@ typedef struct {
 ## 📢 Contribuição
 
 Sugestões e melhorias são bem-vindas!  
-Abra uma issue ou envie um pull request para contribuir com este projeto.
+Abra uma issue ou envie um pull request para contribuir para este projeto.
 
 ---
 
