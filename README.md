@@ -57,16 +57,16 @@ typedef struct {
 
 1. **Clone o repositório:**
 
-- git clone https://github.com/luanacarolinareis/Gestao-Oficina.git
-- cd Gestao-Oficina
+- git clone https://github.com/luanacarolinareis/Workshop-Management.git
+- cd Workshop-Management
 
 2. **Compile o projeto:**
 
-- gcc main.c source.c linkedLists.c queues.c -o gestao_oficina
+- gcc main.c source.c linkedLists.c queues.c -o workshop_management
 
 3. **Execute o programa:**
 
-- ./gestao_oficina
+- ./workshop_management
 
 ---
 
@@ -105,5 +105,5 @@ Abra uma issue ou envie um pull request para contribuir para este projeto.
 
 ---
 
-Gestão de Oficina – Organização, eficiência e flexibilidade na gestão de serviços de oficina!
+Workshop Management – Organização, eficiência e flexibilidade na gestão de serviços de oficina!
 
