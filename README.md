@@ -1,8 +1,8 @@
-# Gestão de Oficina  
+# Workshop Management
 
 Sistema de Gestão de Reservas e Pré-Reservas para Oficinas.
 
-O objetivo do **Gestão de Oficina** é auxiliar os funcionários de uma oficina na administração eficiente das reservas e pré-reservas (fila de espera) para dois serviços principais: lavagem e manutenção de veículos. O sistema foi totalmente implementado em linguagem C, utilizando listas ligadas e filas para garantir flexibilidade, eficiência e organização das operações.
+O objetivo do **Workshop Management** é auxiliar os funcionários de uma oficina na administração eficiente das reservas e pré-reservas (fila de espera) para dois serviços principais: lavagem e manutenção de veículos. O sistema foi totalmente implementado em linguagem C, utilizando listas ligadas e filas para garantir flexibilidade, eficiência e organização das operações.
 
 ---
 
